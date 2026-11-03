@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pedidos: qualquer pessoa pode CRIAR (é o checkout do site);
+    // só a loja logada pode LER, alterar ou apagar.
+    match /pedidos/{pedidoId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+    // Contadores diários (número do pedido).
+    // Qualquer um pode ler e incrementar; ninguém pode apagar.
+    match /contadores/{docId} {
+      allow read, create, update: if true;
+      allow delete: if false;
+    }
+  }
+}

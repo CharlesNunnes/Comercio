@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Point do RD - Delivery de Pizzas</title>
+    <meta name="description" content="Monte sua pizza no Point do RD: escolha o tamanho, os sabores e envie o pedido direto para a cozinha.">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c41e3a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Point do RD">
+    <link rel="apple-touch-icon" href="imagem/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="imagem/icons/favicon-48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="imagem/icons/icon-192.png">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- AVISO: ABRIU DENTRO DO WHATSAPP -->
+    <div id="aviso-whatsapp" class="aviso-whatsapp hidden">
+        <span>Para instalar o app, abra este site no Chrome ou Safari.</span>
+        <button type="button" onclick="fecharAvisoWhatsapp()" aria-label="Fechar aviso">&times;</button>
+    </div>
+
+    <!-- CABEÇALHO -->
+    <header>
+        <div class="container header-content">
+            <h1 class="logo-header">
+                <img src="imagem/logo.jfif" alt="Point do RD - Pizza com sabor que você aprova">
+            </h1>
+            <div id="cart-btn" class="cart-btn" onclick="abrirResumo()" role="button" tabindex="0" aria-label="Abrir meu pedido">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-label">Meu Pedido</span>
+                <span id="cart-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- BANNER -->
+    <section class="banner">
+        <h2>Point do RD</h2>
+        <p>Monte sua pizza do jeito que quiser 🍕</p>
+    </section>
+
+    <!-- CARDÁPIO / MONTAR PIZZA -->
+    <main class="container">
+        <h2 id="page-title">Escolha o Tamanho</h2>
+
+        <!-- ETAPA 1: Tamanho -->
+        <section id="step-size" class="step active">
+            <p class="step-info">Selecione o tamanho da sua pizza:</p>
+            <div class="size-cards" id="size-cards">
+                <!-- Cards injetados via JavaScript -->
+            </div>
+        </section>
+
+        <!-- ETAPA 2: Sabores -->
+        <section id="step-flavors" class="step hidden">
+            <div class="flavor-header">
+                <button id="btn-voltar-tamanho" class="btn-voltar" onclick="voltarTamanho()">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                </button>
+                <div class="progress-info">
+                    <span id="sabores-contador">0</span> de <span id="sabores-total">1</span> sabores escolhidos
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <p class="flavor-info" id="flavor-info">Toque nos sabores para montar sua pizza:</p>
+            <div class="flavor-cards" id="flavor-cards">
+                <!-- Cards injetados via JavaScript -->
+            </div>
+            <div class="botoes-sabores">
+                <button id="btn-adicionar-carrinho" class="btn-adicionar-carrinho hidden" onclick="adicionarAoCarrinho()">
+                    <i class="fa-solid fa-cart-plus"></i> Adicionar ao Carrinho
+                </button>
+            </div>
+        </section>
+
+        <!-- ETAPA 3: Pagamento / Resumo -->
+        <section id="step-payment" class="step hidden">
+            <div class="payment-header">
+                <button id="btn-voltar-sabores" class="btn-voltar" onclick="voltarAoCarrinho()">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar ao Carrinho
+                </button>
+                <h3>Finalizar Pedido</h3>
+            </div>
+
+            <div class="order-summary">
+                <div id="resumo-itens" class="resumo-itens">
+                    <!-- Itens do carrinho injetados via JavaScript -->
+                </div>
+                <div class="summary-item preco-total">
+                    <strong>Total:</strong> <span id="resumo-total">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="name-input">Seu nome:</label>
+                <input type="text" id="name-input" placeholder="Como podemos te chamar?" autocomplete="name">
+                <p id="name-warn" class="warn hidden">Por favor, preencha seu nome!</p>
+            </div>
+
+            <div class="form-group">
+                <label for="phone-input">Telefone / WhatsApp:</label>
+                <input type="tel" id="phone-input" placeholder="(71) 90000-0000" autocomplete="tel" inputmode="tel">
+            </div>
+
+            <div class="form-group">
+                <label for="address-input">Endereço de Entrega (Rua, Número, Bairro):</label>
+                <input type="text" id="address-input" placeholder="Digite seu endereço completo..." autocomplete="street-address">
+                <p id="address-warn" class="warn hidden">Por favor, preencha o endereço de entrega!</p>
+            </div>
+
+            <div class="form-group">
+                <label for="payment-method">Forma de Pagamento:</label>
+                <select id="payment-method" onchange="atualizarTroco()">
+                    <option value="PIX">PIX</option>
+                    <option value="Cartão na Entrega">Cartão (Débito/Crédito)</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                </select>
+            </div>
+
+            <div class="form-group hidden" id="troco-group">
+                <label for="troco-input">Precisa de troco para quanto?</label>
+                <input type="text" id="troco-input" placeholder="Ex: R$ 100,00" inputmode="decimal">
+            </div>
+
+            <div class="form-group">
+                <label for="obs-input">Observações (opcional):</label>
+                <input type="text" id="obs-input" placeholder="Ex: sem cebola, campainha quebrada...">
+            </div>
+
+            <p class="status-impressora" id="status-impressora">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Verificando impressora...
+            </p>
+
+            <div class="modal-actions">
+                <button id="btn-cancelar-pagamento" class="btn-secundario" onclick="voltarAoCarrinho()">Cancelar</button>
+                <button id="checkout-btn" class="btn-checkout" onclick="finalizarPedido()">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar Pedido
+                </button>
+            </div>
+            <p class="checkout-ajuda" id="checkout-ajuda">
+                O pedido vai direto para a impressora da cozinha.
+            </p>
+        </section>
+    </main>
+
+    <!-- MODAL DO CARRINHO -->
+    <div id="cart-modal" class="modal hidden" onclick="fecharModalCarrinho(event)">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="cart-modal-title" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="cart-modal-title"><i class="fa-solid fa-cart-shopping"></i> Meu Pedido</h3>
+                <button type="button" class="modal-close" onclick="fecharModalCarrinho()" aria-label="Fechar">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items"></div>
+            <div class="cart-total">
+                <span>Total</span>
+                <strong id="cart-total-value">R$ 0,00</strong>
+            </div>
+            <div class="cart-actions">
+                <button type="button" class="btn-secundario" onclick="fecharModalCarrinho()">Continuar comprando</button>
+                <button type="button" id="btn-ir-pagamento" class="btn-checkout" onclick="irParaPagamento()">
+                    Finalizar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SUCESSO -->
+    <div id="success-modal" class="modal hidden" onclick="fecharSucesso(event)">
+        <div class="modal-content success-content" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+            <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+            <h3 id="success-title">Pedido enviado!</h3>
+            <p id="success-text">Seu pedido já foi para a cozinha. Em breve entraremos em contato.</p>
+            <p class="success-numero" id="success-numero"></p>
+            <div class="cart-actions">
+                <button type="button" class="btn-secundario" onclick="novoPedido()">Fazer novo pedido</button>
+                <a id="success-whatsapp" class="btn-checkout btn-link" href="#" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> Enviar no WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- BANNER DE INSTALAÇÃO DO APP -->
+    <div id="install-banner" class="install-banner hidden">
+        <img src="imagem/icons/icon-192.png" alt="Point do RD">
+        <div class="install-text">
+            <strong>Instale o app Point do RD</strong>
+            <span id="install-hint">Pedir ficou mais rápido, direto da tela do celular.</span>
+        </div>
+        <button type="button" class="btn-instalar" onclick="instalarApp()">Instalar</button>
+        <button type="button" class="install-close" onclick="fecharBannerInstalacao()" aria-label="Fechar">&times;</button>
+    </div>
+
+    <!-- BOTÃO FLUTUANTE WHATSAPP -->
+    <a href="https://wa.me/5571988580935" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <!-- RODAPÉ -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-logo">
+                <img src="imagem/logo.jfif" alt="Point do RD">
+            </div>
+            <div class="footer-contato">
+                <p><strong>Point do RD</strong> - Delivery de Pizzas</p>
+                <p>📞 WhatsApp: <a href="https://wa.me/5571988580935">(71) 98858-0935</a></p>
+                <p>📍 Monte sua pizza e peça pelo site!</p>
+                <div class="footer-social">
+                    <a href="https://wa.me/5571988580935" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                </div>
+            </div>
+            <div class="footer-copy">
+                <p>&copy; 2026 Point do RD. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase (salva os pedidos para a loja acompanhar no painel) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="firebase.js"></script>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

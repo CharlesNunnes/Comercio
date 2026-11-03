@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Pedidos - Point do RD</title>
+<style>
+    :root {
+        --vermelho: #c41e3a;
+        --dourado: #d4af37;
+        --fundo: #0f0f0f;
+        --card: #1a1a1a;
+        --borda: #333;
+        --texto: #f1f1f1;
+        --cinza: #b0b0b0;
+        --verde: #4CAF50;
+        --laranja: #ff9800;
+        --azul: #4db5ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background: var(--fundo); color: var(--texto); padding: 16px; }
+
+    /* ---------- LOGIN ---------- */
+    .login-wrap {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        background: var(--card);
+        border: 1px solid var(--borda);
+        border-radius: 18px;
+        padding: 34px;
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .login-card h1 { font-size: 1.5rem; color: var(--dourado); margin-bottom: 6px; }
+    .login-card p { color: var(--cinza); font-size: 0.95rem; margin-bottom: 20px; }
+
+    .login-card input {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 12px;
+        background: #242424;
+        border: 1px solid var(--borda);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    .login-card input:focus { outline: none; border-color: var(--vermelho); }
+
+    .login-card button {
+        width: 100%;
+        padding: 15px;
+        background: var(--vermelho);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .login-card button:hover { filter: brightness(1.15); }
+    .login-erro { color: #ff8a8a; font-size: 0.9rem; margin-top: 12px; min-height: 1.2em; }
+
+    .aviso-config {
+        background: #332b00;
+        color: #ffe08a;
+        border: 1px solid #665500;
+        border-radius: 12px;
+        padding: 18px;
+        font-size: 0.92rem;
+        line-height: 1.6;
+        text-align: left;
+        max-width: 520px;
+        margin: 40px auto;
+    }
+
+    .aviso-config code { background: #111; padding: 2px 6px; border-radius: 4px; color: #ffd700; }
+    .aviso-config a { color: var(--dourado); }
+
+    /* ---------- PAINEL ---------- */
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        background: var(--vermelho);
+        padding: 16px 20px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+    }
+
+    .topbar h1 { font-size: 1.3rem; }
+    .topbar p { font-size: 0.85rem; color: rgba(255,255,255,0.85); }
+
+    .topbar-acoes { display: flex; gap: 10px; align-items: center; }
+
+    button {
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        background: rgba(0,0,0,0.35);
+        color: #fff;
+        transition: 0.2s;
+    }
+
+    button:hover { background: rgba(0,0,0,0.5); }
+
+    .aviso {
+        background: #1c3a1e;
+        color: #8ee093;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+        display: none;
+        border: 1px solid #2c5a2e;
+    }
+
+    .aviso.visivel { display: block; }
+
+    .pedidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+
+    .pedido {
+        background: var(--card);
+        border: 1px solid var(--borda);
+        border-left: 6px solid var(--vermelho);
+        border-radius: 12px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pedido.em_preparo { border-left-color: var(--laranja); }
+    .pedido.saiu_entrega { border-left-color: var(--azul); }
+    .pedido.entregue { border-left-color: var(--verde); opacity: 0.6; }
+    .pedido.cancelado { border-left-color: #666; opacity: 0.45; }
+
+    .pedido-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .pedido-num { font-size: 1.4rem; font-weight: bold; color: var(--dourado); }
+    .pedido-hora { color: var(--cinza); font-size: 0.82rem; }
+
+    .pedido-cliente { font-weight: bold; }
+    .pedido-end { color: var(--cinza); font-size: 0.9rem; }
+    .pedido-end a { color: var(--cinza); }
+
+    .pedido-itens { border-top: 1px dashed var(--borda); border-bottom: 1px dashed var(--borda); padding: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+
+    .item-linha { font-size: 0.92rem; }
+    .item-linha strong { color: var(--dourado); }
+    .item-linha span { display: block; color: var(--cinza); font-size: 0.85rem; }
+
+    .pedido-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pedido-total { color: var(--verde); font-size: 1.2rem; font-weight: bold; white-space: nowrap; }
+
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .tag { font-size: 0.72rem; padding: 4px 9px; border-radius: 10px; background: #333; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.4px; }
+    .tag.novo { background: rgba(196,30,58,0.25); color: #ff9aa9; }
+    .tag.em_preparo { background: rgba(255,152,0,0.2); color: #ffc46b; }
+    .tag.saiu_entrega { background: rgba(77,181,255,0.2); color: #a8dcff; }
+    .tag.entregue { background: rgba(76,175,80,0.2); color: #8ee093; }
+    .tag.cancelado { background: #333; color: #999; }
+
+    .obs { background: #2a2410; color: #ffe08a; padding: 8px 10px; border-radius: 8px; font-size: 0.87rem; }
+
+    .pedido-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pedido-botoes button { background: #2a2a2a; color: var(--texto); font-size: 0.8rem; padding: 8px 12px; }
+    .pedido-botoes button:hover { background: #3a3a3a; }
+
+    .btn-whats {
+        background: #25D366;
+        color: #111;
+        text-decoration: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-whats:hover { background: #1ebd54; }
+
+    .vazio { text-align: center; color: var(--cinza); padding: 60px 20px; grid-column: 1 / -1; }
+
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="tela-config" class="aviso-config hidden">
+    <h2>⚙️ Firebase ainda não configurado</h2>
+    <p>Para o painel funcionar, preencha o arquivo <code>firebase-config.js</code> com as
+    chaves do seu projeto Firebase (abra com bloco de notas ou editor).</p>
+    <p>Passo a passo completo no <a href="LEIA-ME.md">LEIA-ME.md</a>, seção “Firebase”.</p>
+</div>
+
+<div id="tela-login" class="login-wrap hidden">
+    <form class="login-card" id="form-login">
+        <h1>🍕 Point do RD</h1>
+        <p>Painel de pedidos da loja.<br>Faça login com o e-mail e a senha cadastrados no Firebase.</p>
+        <input type="email" id="login-email" placeholder="E-mail da loja" required autocomplete="username">
+        <input type="password" id="login-senha" placeholder="Senha" required autocomplete="current-password">
+        <button type="submit">Entrar</button>
+        <p class="login-erro" id="login-erro"></p>
+    </form>
+</div>
+
+<div id="tela-painel" class="hidden">
+    <div class="topbar">
+        <div>
+            <h1>🍕 Point do RD - Pedidos</h1>
+            <p id="contador">Carregando...</p>
+        </div>
+        <div class="topbar-acoes">
+            <a href="index.html" style="color:#fff; text-decoration:none; background:rgba(0,0,0,0.35); padding:10px 16px; border-radius:8px; font-size:0.85rem; font-weight:bold;">Ver site</a>
+            <button type="button" id="btn-sair">Sair</button>
+        </div>
+    </div>
+
+    <div class="aviso" id="aviso"></div>
+
+    <div class="pedidos" id="pedidos">
+        <p class="vazio">Carregando pedidos...</p>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+/* ============================================================
+   Painel da loja - Point do RD
+   ============================================================ */
+
+function firebaseConfigurado() {
+    const c = window.FIREBASE_CONFIG;
+    return Boolean(
+        window.firebase &&
+        c &&
+        typeof c.projectId === "string" &&
+        c.projectId.length > 0 &&
+        !c.projectId.startsWith("COLE")
+    );
+}
+
+function $(id) { return document.getElementById(id); }
+
+function escapar(texto) {
+    return String(texto == null ? "" : texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function moeda(v) {
+    return "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+}
+
+function hora(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function aviso(texto) {
+    const el = $("aviso");
+    if (!el) return;
+    el.textContent = texto;
+    el.classList.add("visivel");
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove("visivel"), 5000);
+}
+
+// Beep curto para avisar de pedido novo
+let audioCtx = null;
+function beep() {
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.value = 0.25;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15);
+        osc.stop(audioCtx.currentTime + 0.35);
+    } catch (e) { /* sem áudio */ }
+}
+
+const NOMES_STATUS = {
+    novo: "Novo",
+    em_preparo: "Em preparo",
+    saiu_entrega: "Saiu p/ entrega",
+    entregue: "Entregue",
+    cancelado: "Cancelado"
+};
+
+let pedidosPorId = new Map();
+let db = null;
+
+function renderizarPedido(p) {
+    const classe = p.status === "entregue" ? "entregue"
+        : p.status === "cancelado" ? "cancelado"
+        : p.status === "em_preparo" ? "em_preparo"
+        : p.status === "saiu_entrega" ? "saiu_entrega"
+        : "novo";
+
+    const tel = String(p.telefone || "").replace(/\D/g, "");
+    const itens = (p.itens || []).map((i) => `
+        <div class="item-linha">
+            <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (${i.fatias} fatias)
+            <span>${(i.sabores || []).map(escapar).join(", ")}</span>
+        </div>
+    `).join("");
+
+    return `
+    <div class="pedido ${classe}" data-id="${p.id}">
+        <div class="pedido-topo">
+            <span class="pedido-num">#${String(p.numero || 0).padStart(4, "0")}</span>
+            <span class="pedido-hora">${hora(p.criadoEm)}</span>
+        </div>
+
+        <div>
+            <div class="pedido-cliente">${escapar(p.nome)}${p.telefone ? " • " + escapar(p.telefone) : ""}</div>
+            <div class="pedido-end">${escapar(p.endereco)}</div>
+        </div>
+
+        <div class="pedido-itens">${itens}</div>
+
+        ${p.observacao ? `<div class="obs">📝 ${escapar(p.observacao)}</div>` : ""}
+
+        <div class="pedido-rodape">
+            <div class="tags">
+                <span class="tag ${classe}">${NOMES_STATUS[p.status] || p.status || "novo"}</span>
+                <span class="tag">${escapar(p.pagamento || "")}</span>
+                ${p.troco ? `<span class="tag">Troco: ${escapar(p.troco)}</span>` : ""}
+            </div>
+            <span class="pedido-total">${moeda(p.total)}</span>
+        </div>
+
+        <div class="pedido-botoes">
+            <button type="button" data-status="em_preparo">Em preparo</button>
+            <button type="button" data-status="saiu_entrega">Saiu p/ entrega</button>
+            <button type="button" data-status="entregue">Entregue</button>
+            <button type="button" data-status="cancelado">Cancelar</button>
+            ${tel ? `<a class="btn-whats" href="https://wa.me/${tel}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+        </div>
+    </div>`;
+}
+
+function renderizar(lista) {
+    const container = $("pedidos");
+    const novos = lista.filter((p) => p.status === "novo" || !p.status).length;
+
+    $("contador").textContent = `${lista.length} pedido${lista.length === 1 ? "" : "s"} • ${novos} novo(s)`;
+
+    if (!lista.length) {
+        container.innerHTML = '<p class="vazio">Nenhum pedido ainda. Os pedidos aparecem aqui na hora, em tempo real.</p>';
+        return;
+    }
+
+    container.innerHTML = lista.map(renderizarPedido).join("");
+
+    // Delegação de clique para os botões de status
+    container.querySelectorAll(".pedido-botoes button[data-status]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const id = btn.closest(".pedido").dataset.id;
+            mudarStatus(id, btn.dataset.status);
+        });
+    });
+}
+
+async function mudarStatus(id, status) {
+    try {
+        await db.collection("pedidos").doc(id).update({ status });
+    } catch (erro) {
+        aviso("Não foi possível atualizar o pedido: " + erro.message);
+    }
+}
+
+let conhecidos = new Set();
+let primeiraCarga = true;
+
+function escutarPedidos() {
+    db.collection("pedidos")
+        .orderBy("criadoTs", "desc")
+        .limit(100)
+        .onSnapshot((snapshot) => {
+            const lista = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+            // Avisa apenas de pedidos realmente novos
+            for (const p of lista) {
+                if (!conhecidos.has(p.id)) {
+                    conhecidos.add(p.id);
+                    if (!primeiraCarga) {
+                        beep();
+                        aviso(`Novo pedido de ${p.nome || "cliente"}!`);
+                    }
+                }
+            }
+            primeiraCarga = false;
+
+            renderizar(lista);
+        }, (erro) => {
+            $("pedidos").innerHTML =
+                '<p class="vazio">Erro ao carregar pedidos: ' + escapar(erro.message) + '</p>';
+        });
+}
+
+function iniciarPainel() {
+    $("tela-login").classList.add("hidden");
+    $("tela-painel").classList.remove("hidden");
+
+    try {
+        firebase.firestore().enablePersistence({ synchronizeTabs: true });
+    } catch (e) { /* não impede o uso */ }
+
+    db = firebase.firestore();
+    escutarPedidos();
+}
+
+function iniciar() {
+    if (!firebaseConfigurado()) {
+        $("tela-config").classList.remove("hidden");
+        return;
+    }
+
+    firebase.initializeApp(window.FIREBASE_CONFIG);
+
+    $("tela-login").classList.remove("hidden");
+
+    $("form-login").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const erroEl = $("login-erro");
+        erroEl.textContent = "";
+
+        const email = $("login-email").value.trim();
+        const senha = $("login-senha").value;
+
+        try {
+            await firebase.auth().signInWithEmailAndPassword(email, senha);
+        } catch (erro) {
+            erroEl.textContent = "E-mail ou senha incorretos.";
+        }
+    });
+
+    $("btn-sair").addEventListener("click", () => firebase.auth().signOut());
+
+    firebase.auth().onAuthStateChanged((usuario) => {
+        if (usuario) {
+            iniciarPainel();
+        } else {
+            $("tela-painel").classList.add("hidden");
+            $("tela-login").classList.remove("hidden");
+        }
+    });
+}
+
+iniciar();
+</script>
+</body>
+</html>
