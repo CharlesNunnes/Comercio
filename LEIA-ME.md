@@ -1,6 +1,6 @@
 # Point do RD — Site + App + Impressora
 
-Este projeto tem três partes:
+Este projeto tem quatro partes:
 
 | Parte | Arquivo | O que faz |
 | --- | --- | --- |
@@ -92,13 +92,39 @@ Se o cupom sair, está pronto.
 
 ---
 
+## 2.2 PIX (QR Code para o cliente)
+
+No site, quando o cliente escolhe **PIX**, aparece um QR Code com o **total já incluído**
+(ao lado, um "PIX Copia e Cola" copiável). Para funcionar, cadastre a chave PIX da loja
+em `config.js`:
+
+```js
+pixChave: "contato@pointdord.com.br",
+pixNome: "POINT DO RD",
+pixCidade: "SALVADOR"
+```
+
+- `pixChave`: CPF/CNPJ, e-mail, telefone ou chave aleatória.
+- `pixNome`: nome que aparece no app do banco (máx. 25 caracteres, sem acento).
+- `pixCidade`: cidade que aparece no app do banco (máx. 15 caracteres, sem acento).
+
+No painel da loja (`admin.html`), os pedidos pagos com PIX ganham o botão
+**“PIX — mostrar QR Code”**, que exibe o mesmo QR Code — útil para conferir o pagamento
+ou exibir para o cliente no balcão.
+
+O QR Code é gerado na própria página (não usa API externa nem internet além do que já está
+carregado). Enquanto a chave não estiver cadastrada, o site mostra um aviso no lugar do QR Code
+e a compra continua normalmente.
+
+---
+
 ## 3. Firebase: colocar o site no ar e salvar os pedidos
 
-Com o Firebase, o site fica em `https://SEU-PROJETO.web.app`, instala no celular como app e
+Com o Firebase, o site fica em `https://pizzaria-rd.web.app`, instala no celular como app e
 **guarda todos os pedidos** para a loja ver no painel — sem impressora.
 
-> Você precisa de uma conta Google (gratuita) e do plano grátis do Firebase (Spark), que serve
-> para um lanche desse porte com folga.
+> Projeto já criado: **`pizzaria-rd`**. As chaves já estão em `firebase-config.js` e o
+> `.firebaserc` já aponta para esse projeto. Falta apenas ativar o login da loja e publicar.
 
 ### 3.1 Criar o projeto
 
@@ -135,21 +161,27 @@ Com o Firebase, o site fica em `https://SEU-PROJETO.web.app`, instala no celular
 3. No terminal, dentro da pasta do projeto:
 
 ```bat
-firebase deploy --only hosting,firestore:rules --project SEU-PROJETO
+firebase deploy --only hosting,firestore:rules --project pizzaria-rd
 ```
 
-> Troque `SEU-PROJETO` pelo ID do seu projeto (aparece no console, em **Configurações do
-> projeto → Nome do projeto**). O `.firebaserc` já tem um espaço para esse ID.
+> O `.firebaserc` já aponta para `pizzaria-rd`; o `--project` é opcional.
 
-4. Abra `https://SEU-PROJETO.web.app` no celular — o site funciona e **instala como app**.
+4. Abra `https://pizzaria-rd.web.app` no celular — o site funciona e **instala como app**.
 
 ### 3.6 Painel da loja
 
-Abra `https://SEU-PROJETO.web.app/admin.html` e faça login com o e-mail/senha criados no item 3.4.
+Abra `https://pizzaria-rd.web.app/admin.html` e faça login com o e-mail/senha criados no item 3.4.
 
 Você vê os pedidos chegando **em tempo real** (com aviso sonoro), o total, os itens, e pode:
+- **buscar** por nome, telefone, endereço ou número do pedido
+- **filtrar** por status: Novos, Em preparo, Saiu p/ entrega, Entregues e Cancelados
 - mudar o status: **Em preparo → Saiu p/ entrega → Entregue** (ou **Cancelar**)
-- abrir o WhatsApp do cliente para avisar que a pizza saiu
+- **“Avisar cliente”**: **cada** mudança de status abre o WhatsApp do cliente com a mensagem daquele
+  momento já escrita — *“recebemos o seu pedido”*, *“está sendo preparado”*, *“saiu para entrega”*
+  ou *“pedido entregue, obrigado!”* — é só tocar em enviar. O Cancelar é o único que não abre mensagem.
+  O botão **“Avisar cliente”** do card faz a mesma coisa a qualquer momento, sem mudar o status.
+- abrir o WhatsApp do cliente para falar sobre o pedido
+- pedidos com pagamento em **PIX** ganham o botão **“PIX — mostrar QR Code”** (QR do pagamento)
 
 > Com o site publicado no Firebase você NÃO precisa de computador ligado nem de servidor
 > rodando — nem para salvar os pedidos, nem para ver o painel.
@@ -159,6 +191,39 @@ Você vê os pedidos chegando **em tempo real** (com aviso sonoro), o total, os 
 O arquivo `firebase.json` já está configurado para **ignorar** a pasta `servidor/`, o `LEIA-ME.md`
 e os arquivos internos. Ou seja: o código do servidor de impressão e este guia continuam só no
 seu computador.
+
+### 3.8 Publicar na Vercel (alternativa ao Firebase Hosting)
+
+O site é 100% estático e funciona na Vercel sem servidor:
+
+1. Suba o repositório para o GitHub (o projeto já está conectado ao remoto).
+2. Na Vercel, importe o repositório e publique. **Não precisa de build**: o site é servido
+   direto da raiz do projeto.
+3. O arquivo `.vercelignore` mantém a pasta `servidor/`, este guia e os arquivos internos fora
+   do site público.
+4. O arquivo `vercel.json` evita cache antigo do `sw.js`, `config.js`, `firebase-config.js` e
+   `manifest.json`.
+
+> Para o painel funcionar, publique as regras do Firestore (item 3.3) e ative o login da loja
+> (item 3.4). O site de pedidos funciona mesmo sem isso: o pedido continua indo pelo WhatsApp.
+
+### 3.9 Trocar as fotos do cardápio
+
+As fotos ficam em `imagem/cardapio/`. Cada sabor aponta para um arquivo em `script.js`
+(campo `image`).
+
+- **Jeito mais simples (recomendado agora):** no GitHub, abra `imagem/cardapio/`, clique em
+  **Add file → Upload files**, envie a foto com o mesmo nome do arquivo atual
+  (ex.: `calabresa.jpg`) e confirme. A Vercel publica sozinha em seguida.
+- **Sem mexer no código:** o campo `image` aceita uma URL completa (Cloudinary, ImgBB etc.).
+  Basta trocar o caminho no `script.js`.
+- **Upload pelo painel (futuro):** é possível adicionar uma aba de imagens no `admin.html`
+  usando o Firebase Storage; aí a loja troca as fotos sem passar pelo GitHub.
+- **Se faltar foto:** o site usa automaticamente `imagem/cardapio/pizza-padrao.jpg` — tanto
+  quando o sabor não tem `image` quanto quando o arquivo falha ao carregar.
+
+> Dica: mantenha as fotos em JPG, com ~1200px de largura e abaixo de 200 KB, para o site abrir
+> rápido no celular.
 
 ---
 
@@ -221,6 +286,7 @@ O site do cliente continua funcionando normalmente (a criação de pedidos é p�
 | --- | --- |
 | "Impressora não configurada" no site | Confira `servidor/config.json` e clique em Testar impressão no painel |
 | Painel diz "Firebase ainda não configurado" | Preencha `firebase-config.js` com as chaves do seu projeto (item 3.2) |
+| QR Code PIX não aparece | Cadastre `pixChave` em `config.js` (seção 2.2) |
 | Pedidos não aparecem no painel | Publique as regras do Firestore (item 3.3) e confira se você está logado |
 | Site publicado, painel pede login de novo toda hora | Normal: o login fica salvo no navegador; use "Lembrar"/mantenha o navegador aberto |
 | Cupom sai com acentos errados | Use o modo `rede` (ESC/POS) em vez de `windows` |
@@ -228,7 +294,7 @@ O site do cliente continua funcionando normalmente (a criação de pedidos é p�
 | App não instala no celular | O site precisa estar em HTTPS (veja item 3) |
 | Pedido não abre no WhatsApp | Verifique o número em `config.js` → `whatsapp` (55 + DDD + número, só dígitos) |
 | Pedido não chega no servidor | Confira o endereço em `config.js` → `api` e se o túnel/servidor está rodando |
-| Alterei o site e o celular mostra a versão antiga | Aumente a versão em `sw.js` (`point-do-rd-v10` → `v11`) |
+| Alterei o site e o celular mostra a versão antiga | Aumente a versão em `sw.js` (`point-do-rd-v19` → `v20`) |
 
 ---
 
@@ -240,7 +306,8 @@ Pizzaria/
 ├─ admin.html          painel da loja (Firebase)
 ├─ style.css
 ├─ script.js           montagem da pizza, carrinho e envio
-├─ config.js           WhatsApp da loja, taxa de entrega
+├─ config.js           WhatsApp da loja, taxa, dados do PIX
+├─ pix.js              geração do PIX Copia e Cola (BR Code)
 ├─ firebase.js         salvar pedido no Firestore
 ├─ firebase-config.js  chaves do seu projeto Firebase
 ├─ firebase.json       configuração de publicação (Hosting + regras)
@@ -248,9 +315,13 @@ Pizzaria/
 ├─ manifest.json       configuração do app
 ├─ sw.js               cache offline
 ├─ imagem/
-│  ├─ logo.jfif
+│  ├─ Logo-RD.png      arte da marca recortada (fundo transparente)
+│  ├─ Logo-RD-fundo-branco.png  arte original com fundo branco
+│  ├─ logo-rd-web.png  versão otimizada para site e painel
+│  ├─ banner.jpg       imagem de fundo do topo
+│  ├─ og-image.jpg     imagem de compartilhamento (WhatsApp/redes)
 │  ├─ icons/           ícones do app
-│  └─ cardapio/        fotos dos sabores
+│  └─ cardapio/        fotos dos sabores (JPG otimizados)
 └─ servidor/
    ├─ server.js        servidor HTTP + API (só se tiver impressora)
    ├─ config.json      configuração da impressora

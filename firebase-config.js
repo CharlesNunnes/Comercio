@@ -1,9 +1,7 @@
 /* ============================================================
    CONFIGURAÇÃO DO FIREBASE - Point do RD
    ------------------------------------------------------------
-   1) Crie um projeto em https://console.firebase.google.com
-   2) Adicione um app "Web" (código </>) no projeto
-   3) Copie o objeto "firebaseConfig" gerado pelo console e cole aqui
+   Projeto: pizzaria-rd
    ------------------------------------------------------------
    Essas chaves NÃO são secretas: elas são públicas por definição
    do Firebase. Quem protege os dados são as regras do Firestore
@@ -11,11 +9,11 @@
    ============================================================ */
 
 window.FIREBASE_CONFIG = {
-    apiKey: "COLE AQUI",
-    authDomain: "COLE AQUI.firebaseapp.com",
-    projectId: "COLE AQUI",
-    storageBucket: "COLE AQUI.appspot.com",
-    messagingSenderId: "COLE AQUI",
-    appId: "COLE AQUI",
-    measurementId: ""
+    apiKey: "AIzaSyDX4GkgJdl2kTohcUauQPbwuYcgXtA7NrU",
+    authDomain: "pizzaria-rd.firebaseapp.com",
+    projectId: "pizzaria-rd",
+    storageBucket: "pizzaria-rd.firebasestorage.app",
+    messagingSenderId: "249872062944",
+    appId: "1:249872062944:web:8f2e6949c5f36c5dfa3385",
+    measurementId: "G-54DGXNNEDG"
 };

@@ -1,6 +1,6 @@
 /* ============================================================
    CONFIGURAÇÕES DO SITE - Point do RD
-   Edite este arquivo para mudar telefone, taxa e servidor.
+   Edite este arquivo para mudar telefone, taxa, entrega e PIX.
    ============================================================ */
 
 window.POINT_RD = {
@@ -24,6 +24,19 @@ window.POINT_RD = {
     // Quando tiver a impressora, configure servidor/config.json e mude para true.
     impressaoAutomatica: false,
 
-    // Nome que aparece no topo do cupom impresso
-    nomeLoja: "POINT DO RD"
+    // Nome que aparece no topo do cupom impresso e nas mensagens
+    nomeLoja: "POINT DO RD",
+
+    // ============================
+    // PIX DA LOJA (opcional, mas recomendado)
+    // ============================
+    // Chave PIX da loja: CPF/CNPJ, e-mail, telefone (celular) ou chave aleatória.
+    // Exemplo de chave tipo e-mail: "contato@pointdord.com.br"
+    pixChave: "",
+
+    // Nome que aparece no app do banco ao pagar (máx. 25 caracteres, sem acento)
+    pixNome: "POINT DO RD",
+
+    // Cidade que aparece no app do banco ao pagar (máx. 15 caracteres, sem acento)
+    pixCidade: "SALVADOR"
 };

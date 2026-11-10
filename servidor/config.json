@@ -1,0 +1,20 @@
+{
+  "porta": 3000,
+  "impressora": {
+    "tipo": "arquivo",
+    "host": "192.168.0.200",
+    "portaRede": 9100,
+    "nomeWindows": "",
+    "largura": 48,
+    "copias": 1,
+    "cortarPapel": true,
+    "abrirGaveta": false
+  },
+  "seguranca": {
+    "token": ""
+  },
+  "loja": {
+    "nome": "POINT DO RD",
+    "telefone": "(71) 98858-0935"
+  }
+}

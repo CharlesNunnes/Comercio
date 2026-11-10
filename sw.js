@@ -4,7 +4,7 @@
    mesmo com internet fraca (offline parcial).
    ============================================================ */
 
-const VERSAO = "point-do-rd-v12";
+const VERSAO = "point-do-rd-v20";
 const CACHE_APP = `${VERSAO}-app`;
 const CACHE_IMAGENS = `${VERSAO}-imagens`;
 
@@ -16,26 +16,29 @@ const ARQUIVOS_APP = [
     "./config.js",
     "./firebase.js",
     "./firebase-config.js",
+    "./pix.js",
     "./admin.html",
     "./manifest.json",
-    "./imagem/logo.jfif",
+    "./imagem/logo-rd-web.png",
     "./imagem/banner.jpg",
+    "./imagem/og-image.jpg",
     "./imagem/icons/icon-192.png",
     "./imagem/icons/icon-512.png",
     "./imagem/icons/maskable-512.png",
     "./imagem/icons/apple-touch-icon.png",
+    "./imagem/icons/favicon-48.png",
     "./imagem/cardapio/calabresa.jpg",
     "./imagem/cardapio/mista.jpg",
     "./imagem/cardapio/mussarela.jpg",
     "./imagem/cardapio/portuguesa.jpg",
     "./imagem/cardapio/tres-queijos.jpg",
+    "./imagem/cardapio/frango-catupiry.jpg",
     "./imagem/cardapio/atum.jpg",
     "./imagem/cardapio/bacon.jpg",
     "./imagem/cardapio/romeu-e-julieta.jpg",
     "./imagem/cardapio/brigadeiro.jpg",
     "./imagem/cardapio/doce-de-leite.jpg",
-    "./imagem/cardapio/pizza-padrao.jpg",
-    "./imagem/cardapio/frango%20com%20catupiry.jfif"
+    "./imagem/cardapio/pizza-padrao.jpg"
 ];
 
 // Recursos externos que valem a pena guardar para o app abrir bonito offline.

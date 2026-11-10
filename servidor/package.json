@@ -1,0 +1,10 @@
+{
+  "name": "point-do-rd-servidor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor de pedidos e impressão do Point do RD",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

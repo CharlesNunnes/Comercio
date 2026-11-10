@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Pedidos - Point do RD</title>
+<style>
+    :root {
+        --vermelho: #c41e3a;
+        --dourado: #d4af37;
+        --fundo: #0f0f0f;
+        --card: #1a1a1a;
+        --borda: #333;
+        --texto: #f1f1f1;
+        --cinza: #b0b0b0;
+        --verde: #4CAF50;
+        --laranja: #ff9800;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+    body { background: var(--fundo); color: var(--texto); padding: 20px; }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        background: var(--vermelho);
+        padding: 16px 20px;
+        border-radius: 14px;
+        margin-bottom: 22px;
+    }
+
+    header h1 { font-size: 1.4rem; }
+
+    .status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0,0,0,0.3);
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #999; }
+    .dot.on { background: var(--verde); box-shadow: 0 0 10px var(--verde); }
+    .dot.off { background: var(--laranja); box-shadow: 0 0 10px var(--laranja); }
+
+    .acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    button {
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        background: #333;
+        color: var(--texto);
+        transition: 0.2s;
+    }
+
+    button:hover { background: #444; }
+    button.primary { background: var(--dourado); color: #111; }
+    button.primary:hover { background: #e6c250; }
+    button.danger { background: #4a1414; color: #ff8a8a; }
+    button.ok { background: #1c3a1e; color: #8ee093; }
+
+    .aviso {
+        background: #332b00;
+        color: #ffe08a;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        font-size: 0.9rem;
+        display: none;
+    }
+
+    .aviso.visivel { display: block; }
+
+    .pedidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+
+    .pedido {
+        background: var(--card);
+        border: 1px solid var(--borda);
+        border-left: 6px solid var(--dourado);
+        border-radius: 12px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pedido.novo { border-left-color: var(--vermelho); animation: destaque 1s ease; }
+    .pedido.entregue { opacity: 0.6; border-left-color: var(--verde); }
+    .pedido.cancelado { opacity: 0.45; border-left-color: #666; }
+
+    @keyframes destaque {
+        from { box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.6); }
+        to { box-shadow: none; }
+    }
+
+    .pedido-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .pedido-num { font-size: 1.5rem; font-weight: bold; color: var(--dourado); }
+    .pedido-hora { color: var(--cinza); font-size: 0.85rem; }
+
+    .pedido-cliente { font-weight: bold; }
+    .pedido-end { color: var(--cinza); font-size: 0.92rem; }
+
+    .pedido-itens { border-top: 1px dashed var(--borda); border-bottom: 1px dashed var(--borda); padding: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+
+    .item-linha { font-size: 0.95rem; }
+    .item-linha strong { color: var(--dourado); }
+    .item-linha span { display: block; color: var(--cinza); font-size: 0.87rem; }
+
+    .pedido-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: bold; }
+    .pedido-total { color: var(--verde); font-size: 1.2rem; white-space: nowrap; }
+
+    .tag { font-size: 0.75rem; padding: 3px 9px; border-radius: 10px; background: #333; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; }
+    .tag.novo { background: rgba(196,30,58,0.25); color: #ff9aa9; }
+    .tag.impresso { background: rgba(76,175,80,0.2); color: #8ee093; }
+    .tag.erro { background: rgba(255,152,0,0.2); color: #ffc46b; }
+
+    .obs { background: #2a2410; color: #ffe08a; padding: 8px 10px; border-radius: 8px; font-size: 0.88rem; }
+
+    .pedido-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .vazio { text-align: center; color: var(--cinza); padding: 60px 20px; grid-column: 1 / -1; }
+
+    .contador { color: var(--cinza); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>🍕 Point do RD - Pedidos</h1>
+        <p class="contador" id="contador">Carregando...</p>
+    </div>
+    <div class="status">
+        <span class="dot" id="dot"></span>
+        <span id="status-texto">Verificando impressora...</span>
+    </div>
+    <div class="acoes">
+        <button type="button" onclick="carregar()">Atualizar</button>
+        <button type="button" class="primary" onclick="testarImpressao()">Testar impressão</button>
+        <button type="button" onclick="configurarToken()">Token</button>
+    </div>
+</header>
+
+<div class="aviso" id="aviso"></div>
+
+<div class="pedidos" id="pedidos">
+    <p class="vazio">Carregando pedidos...</p>
+</div>
+
+<script>
+const token = new URLSearchParams(location.search).get("token") || localStorage.getItem("point-rd-token") || "";
+let ultimoTotal = 0;
+let audioCtx = null;
+
+function comToken(url) {
+    if (!token) return url;
+    return url + (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(token);
+}
+
+function headers() {
+    return token ? { "x-token": token } : {};
+}
+
+function aviso(texto, tempo = 6000) {
+    const el = document.getElementById("aviso");
+    el.textContent = texto;
+    el.classList.add("visivel");
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove("visivel"), tempo);
+}
+
+function configurarToken() {
+    const atual = localStorage.getItem("point-rd-token") || "";
+    const novo = prompt("Token do painel (deixe vazio se não configurou):", atual);
+    if (novo === null) return;
+    localStorage.setItem("point-rd-token", novo.trim());
+    location.reload();
+}
+
+function beep() {
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.value = 0.25;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15);
+        osc.stop(audioCtx.currentTime + 0.35);
+    } catch (e) { /* sem áudio */ }
+}
+
+function hora(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function moeda(v) {
+    return "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+}
+
+async function verificarStatus() {
+    const dot = document.getElementById("dot");
+    const texto = document.getElementById("status-texto");
+    try {
+        const resp = await fetch("/api/status", { cache: "no-store" });
+        const dados = await resp.json();
+        const imp = dados.impressora || {};
+        dot.className = "dot " + (imp.ok ? "on" : "off");
+        texto.textContent = imp.ok
+            ? (imp.tipo === "arquivo" ? "Modo teste: cupom em arquivo" : `Impressora OK (${imp.tipo})`)
+            : `Impressora: ${imp.mensagem}`;
+    } catch (e) {
+        dot.className = "dot off";
+        texto.textContent = "Servidor sem resposta";
+    }
+}
+
+async function carregar() {
+    try {
+        const resp = await fetch(comToken("/api/pedidos?limite=60"), { headers: headers(), cache: "no-store" });
+        if (resp.status === 401) {
+            document.getElementById("pedidos").innerHTML =
+                '<p class="vazio">Token inválido. Clique em "Token" e informe o token do config.json.</p>';
+            return;
+        }
+        const dados = await resp.json();
+        renderizar(dados.pedidos || []);
+    } catch (e) {
+        document.getElementById("pedidos").innerHTML =
+            '<p class="vazio">Não foi possível carregar os pedidos. O servidor está rodando?</p>';
+    }
+}
+
+function renderizar(lista) {
+    const container = document.getElementById("pedidos");
+    const total = lista.length;
+
+    document.getElementById("contador").textContent =
+        `${total} pedido${total === 1 ? "" : "s"} • ${lista.filter(p => p.status === "novo").length} novo(s)`;
+
+    if (lista.length > ultimoTotal) beep();
+    ultimoTotal = total;
+
+    if (!lista.length) {
+        container.innerHTML = '<p class="vazio">Nenhum pedido ainda. Os pedidos aparecem aqui automaticamente.</p>';
+        return;
+    }
+
+    container.innerHTML = lista.map((p) => {
+        const classe = p.status === "entregue" ? "entregue" : p.status === "cancelado" ? "cancelado" : p.status === "novo" ? "novo" : "";
+        const tagImp = p.impresso
+            ? '<span class="tag impresso">Impresso</span>'
+            : '<span class="tag erro">Não impresso</span>';
+
+        return `
+        <div class="pedido ${classe}">
+            <div class="pedido-topo">
+                <span class="pedido-num">#${String(p.numero).padStart(4, "0")}</span>
+                <span class="pedido-hora">${hora(p.criadoEm)}</span>
+            </div>
+
+            <div>
+                <div class="pedido-cliente">${escapar(p.nome)} ${p.telefone ? "• " + escapar(p.telefone) : ""}</div>
+                <div class="pedido-end">${escapar(p.endereco)}</div>
+            </div>
+
+            <div class="pedido-itens">
+                ${(p.itens || []).map((i) => `
+                    <div class="item-linha">
+                        <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (${i.fatias} fatias)
+                        <span>${(i.sabores || []).map(escapar).join(", ")}</span>
+                    </div>
+                `).join("")}
+            </div>
+
+            ${p.observacao ? `<div class="obs">📝 ${escapar(p.observacao)}</div>` : ""}
+
+            <div class="pedido-rodape">
+                <div>
+                    <span class="tag">${escapar(p.pagamento)}</span>
+                    ${p.troco ? `<span class="tag">Troco: ${escapar(p.troco)}</span>` : ""}
+                    ${tagImp}
+                </div>
+                <span class="pedido-total">${moeda(p.total)}</span>
+            </div>
+
+            <div class="pedido-botoes">
+                <button type="button" class="ok" onclick="mudarStatus('${p.id}', 'em_preparo')">Em preparo</button>
+                <button type="button" class="ok" onclick="mudarStatus('${p.id}', 'saiu_entrega')">Saiu p/ entrega</button>
+                <button type="button" onclick="mudarStatus('${p.id}', 'entregue')">Entregue</button>
+                <button type="button" class="primary" onclick="reimprimir('${p.id}')">Reimprimir</button>
+                <button type="button" class="danger" onclick="mudarStatus('${p.id}', 'cancelado')">Cancelar</button>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function escapar(texto) {
+    return String(texto == null ? "" : texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+async function mudarStatus(id, status) {
+    try {
+        const resp = await fetch(comToken(`/api/pedidos/${id}/status`), {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...headers() },
+            body: JSON.stringify({ status })
+        });
+        const dados = await resp.json();
+        if (!dados.ok) throw new Error(dados.erro || "Erro");
+        carregar();
+    } catch (e) {
+        aviso("Não foi possível atualizar: " + e.message);
+    }
+}
+
+async function reimprimir(id) {
+    try {
+        const resp = await fetch(comToken(`/api/pedidos/${id}/reimprimir`), {
+            method: "POST",
+            headers: headers()
+        });
+        const dados = await resp.json();
+        aviso(dados.ok ? "Cupom reenviado para a impressora." : "Falha ao imprimir: " + dados.mensagem);
+        carregar();
+    } catch (e) {
+        aviso("Erro ao reimprimir: " + e.message);
+    }
+}
+
+async function testarImpressao() {
+    try {
+        const resp = await fetch(comToken("/api/teste-impressao"), {
+            method: "POST",
+            headers: headers()
+        });
+        const dados = await resp.json();
+        aviso(dados.ok ? "Cupom de teste enviado." : "Falha: " + dados.mensagem);
+    } catch (e) {
+        aviso("Erro no teste: " + e.message);
+    }
+}
+
+// Atualização em tempo real (SSE) com queda para polling
+function conectarEventos() {
+    if (!("EventSource" in window)) return;
+    const fonte = new EventSource(comToken("/api/eventos"));
+    fonte.addEventListener("pedido", (evento) => {
+        beep();
+        aviso("Novo pedido recebido!");
+        carregar();
+    });
+    fonte.addEventListener("atualizado", () => carregar());
+    fonte.onerror = () => { /* o navegador reconecta sozinho */ };
+}
+
+verificarStatus();
+carregar();
+conectarEventos();
+setInterval(carregar, 15000);
+setInterval(verificarStatus, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Arquivos que NÃO precisam ir para a Vercel
+servidor/
+LEIA-ME.md
+firebase.json
+.firebaserc
+firestore.rules
+imagem/Logo-RD.png
+imagem/Logo-RD-fundo-branco.png

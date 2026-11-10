@@ -1,7 +1,8 @@
 {
-  "name": "Point do RD - Delivery de Pizzas",
+  "id": "/?source=pwa",
+  "name": "Point do RD - Pizzaria Artesanal",
   "short_name": "Point do RD",
-  "description": "Monte sua pizza e peça direto para a cozinha do Point do RD.",
+  "description": "Monte sua pizza artesanal e peça direto para a cozinha do Point do RD.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./index.html",
@@ -9,9 +10,10 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#0f0f0f",
-  "theme_color": "#c41e3a",
-  "categories": ["food", "shopping"],
+  "background_color": "#0b0a09",
+  "theme_color": "#d7263d",
+  "categories": ["food", "shopping", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "imagem/icons/icon-192.png",
@@ -36,7 +38,22 @@
     {
       "name": "Montar pizza",
       "short_name": "Pedir",
-      "url": "./index.html",
+      "description": "Escolher tamanho e sabores",
+      "url": "./index.html#montar",
+      "icons": [{ "src": "imagem/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mais pedidas",
+      "short_name": "Favoritas",
+      "description": "Ver os sabores favoritos da casa",
+      "url": "./index.html#mais-pedidas",
+      "icons": [{ "src": "imagem/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Falar no WhatsApp",
+      "short_name": "WhatsApp",
+      "description": "Abrir a conversa com a loja",
+      "url": "https://wa.me/5571988580935",
       "icons": [{ "src": "imagem/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
