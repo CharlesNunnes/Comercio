@@ -998,8 +998,10 @@ function escutarPedidos() {
 
             renderizar(lista);
         }, (erro) => {
-            $("pedidos").innerHTML =
-                '<p class="vazio">Erro ao carregar pedidos: ' + escapar(erro.message) + '</p>';
+            const mensagem = erro.code === "permission-denied"
+                ? "As regras do Firestore ainda não foram publicadas. No Firebase Console, abra Firestore Database > Regras, cole o conteúdo de firestore.rules e clique em Publicar."
+                : "Erro ao carregar pedidos: " + erro.message;
+            $("pedidos").innerHTML = '<p class="vazio">' + escapar(mensagem) + '</p>';
         });
 }
 
@@ -1045,6 +1047,8 @@ function iniciar() {
                 erroEl.textContent = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
             } else if (erro.code === "auth/network-request-failed") {
                 erroEl.textContent = "Falha de conexão. Verifique a internet e tente novamente.";
+            } else if (erro.code === "auth/configuration-not-found" || erro.code === "auth/operation-not-allowed") {
+                erroEl.textContent = "Login ainda não ativado no Firebase. Ative Authentication > E-mail/senha.";
             } else {
                 erroEl.textContent = "E-mail ou senha incorretos.";
             }
@@ -1067,7 +1071,11 @@ function iniciar() {
             erroEl.textContent = "Enviamos um link para redefinir a senha no e-mail cadastrado.";
             erroEl.classList.add("info");
         } catch (erro) {
-            erroEl.textContent = "Não foi possível enviar o link. Confira o e-mail e tente novamente.";
+            if (erro.code === "auth/configuration-not-found" || erro.code === "auth/operation-not-allowed") {
+                erroEl.textContent = "Login ainda não ativado no Firebase. Ative Authentication > E-mail/senha.";
+            } else {
+                erroEl.textContent = "Não foi possível enviar o link. Confira o e-mail e tente novamente.";
+            }
         }
     });
 
