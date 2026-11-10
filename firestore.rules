@@ -3,15 +3,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // E-mail do proprietário autorizado a acessar o painel.
+    // Precisa ser o MESMO e-mail de config.js (adminEmail) e o MESMO
+    // cadastrado em Authentication > Users.
+    function isProprietario() {
+      return request.auth != null
+        && request.auth.token.email == "admin@pointdord.com";
+    }
+
     // Pedidos: qualquer pessoa pode CRIAR (é o checkout do site);
-    // só a loja logada pode LER, alterar ou apagar.
+    // só o proprietário logado pode LER, alterar ou apagar.
     match /pedidos/{pedidoId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if isProprietario();
     }
 
     // Contadores diários (número do pedido).
-    // Qualquer um pode ler e incrementar; ninguém pode apagar.
+    // O site precisa incrementar sem login; ninguém pode apagar.
     match /contadores/{docId} {
       allow read, create, update: if true;
       allow delete: if false;

@@ -28,6 +28,14 @@ window.POINT_RD = {
     nomeLoja: "POINT DO RD",
 
     // ============================
+    // ACESSO AO PAINEL DE PEDIDOS
+    // ============================
+    // Só este e-mail consegue abrir o painel admin.html e ler os pedidos.
+    // Precisa ser o MESMO e-mail cadastrado no Firebase Authentication
+    // (Authentication > Users) e o MESMO usado em firestore.rules.
+    adminEmail: "admin@pointdord.com",
+
+    // ============================
     // PIX DA LOJA (opcional, mas recomendado)
     // ============================
     // Chave PIX da loja: CPF/CNPJ, e-mail, telefone (celular) ou chave aleatória.

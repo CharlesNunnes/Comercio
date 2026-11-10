@@ -148,11 +148,18 @@ Com o Firebase, o site fica em `https://pizzaria-rd.web.app`, instala no celular
 > As regras deixam qualquer pessoa CRIAR um pedido (é o checkout do site), mas só a loja
 > logada consegue LER ou alterar os pedidos.
 
-### 3.4 Criar o login da loja
+### 3.4 Criar o login do proprietário
 
 1. Menu lateral **Compilação → Authentication** → **Vamos começar**.
 2. Em **Métodos de login**, ative **E-mail/senha** → Salvar.
-3. Aba **Usuários** → **Adicionar usuário** → e-mail e senha da loja → **Adicionar usuário**.
+3. Aba **Usuários** → **Adicionar usuário** → use o **mesmo e-mail** configurado em
+   `config.js` (campo `adminEmail`, padrão `admin@pointdord.com`) e uma senha forte.
+4. O e-mail também precisa estar em `firestore.rules`, na função `isProprietario()`.
+   Se trocar o e-mail, atualize nos três lugares: `config.js`, `firestore.rules` e
+   Authentication > Users.
+5. **Somente esse e-mail** consegue abrir o painel e ler os pedidos. Qualquer outra conta
+   é desconectada automaticamente, mesmo que consiga se cadastrar no Firebase.
+6. O link **“Esqueci minha senha”** no painel envia o e-mail de redefinição para esse endereço.
 
 ### 3.5 Publicar
 

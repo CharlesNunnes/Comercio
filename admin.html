@@ -160,6 +160,29 @@
         min-height: 1.2em;
     }
 
+    .login-erro.info {
+        color: var(--gold);
+    }
+
+    .login-card > p.login-ajuda {
+        margin: 4px 0 0;
+    }
+
+    .login-ajuda button {
+        background: none;
+        border: 0;
+        color: var(--muted);
+        font-family: inherit;
+        font-size: 0.8rem;
+        text-decoration: underline;
+        cursor: pointer;
+        padding: 6px;
+    }
+
+    .login-ajuda button:hover {
+        color: var(--gold);
+    }
+
     .aviso-config {
         background: rgba(255,183,77,0.08);
         color: #ffcf7a;
@@ -561,9 +584,9 @@
     <form class="login-card" id="form-login">
         <img class="brand-logo" src="imagem/logo-rd-web.png" alt="Point do RD - Pizzaria Artesanal">
         <h1>Painel de pedidos</h1>
-        <p>Acesso restrito da loja.<br>Entre com o e-mail e a senha cadastrados no Firebase.</p>
+        <p>Acesso exclusivo do proprietário.<br>Entre com o e-mail e a senha cadastrados no Firebase.</p>
         <div class="field">
-            <label for="login-email">E-mail da loja</label>
+            <label for="login-email">E-mail do proprietário</label>
             <input type="email" id="login-email" placeholder="voce@pointdord.com" required autocomplete="username">
         </div>
         <div class="field">
@@ -571,6 +594,7 @@
             <input type="password" id="login-senha" placeholder="Sua senha" required autocomplete="current-password">
         </div>
         <button type="submit">Entrar no painel</button>
+        <p class="login-ajuda"><button type="button" id="btn-esqueci">Esqueci minha senha</button></p>
         <p class="login-erro" id="login-erro"></p>
     </form>
 </div>
@@ -636,6 +660,15 @@ function firebaseConfigurado() {
 }
 
 function $(id) { return document.getElementById(id); }
+
+function emailProprietario() {
+    return String((window.POINT_RD && window.POINT_RD.adminEmail) || "").trim().toLowerCase();
+}
+
+function ehProprietario(usuario) {
+    const alvo = emailProprietario();
+    return Boolean(usuario && usuario.email && alvo && usuario.email.toLowerCase() === alvo);
+}
 
 function escapar(texto) {
     return String(texto == null ? "" : texto)
@@ -992,10 +1025,15 @@ function iniciar() {
 
     $("tela-login").classList.remove("hidden");
 
+    // Já deixa o e-mail do proprietário preenchido para facilitar o acesso.
+    const campoEmail = $("login-email");
+    if (campoEmail && !campoEmail.value) campoEmail.value = emailProprietario();
+
     $("form-login").addEventListener("submit", async (event) => {
         event.preventDefault();
         const erroEl = $("login-erro");
         erroEl.textContent = "";
+        erroEl.classList.remove("info");
 
         const email = $("login-email").value.trim();
         const senha = $("login-senha").value;
@@ -1003,14 +1041,57 @@ function iniciar() {
         try {
             await firebase.auth().signInWithEmailAndPassword(email, senha);
         } catch (erro) {
-            erroEl.textContent = "E-mail ou senha incorretos.";
+            if (erro.code === "auth/too-many-requests") {
+                erroEl.textContent = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+            } else if (erro.code === "auth/network-request-failed") {
+                erroEl.textContent = "Falha de conexão. Verifique a internet e tente novamente.";
+            } else {
+                erroEl.textContent = "E-mail ou senha incorretos.";
+            }
         }
     });
 
-    $("btn-sair").addEventListener("click", () => firebase.auth().signOut());
+    $("btn-esqueci").addEventListener("click", async () => {
+        const erroEl = $("login-erro");
+        const email = $("login-email").value.trim() || emailProprietario();
+        erroEl.textContent = "";
+        erroEl.classList.remove("info");
+
+        if (!email) {
+            erroEl.textContent = "Informe o e-mail do proprietário.";
+            return;
+        }
+
+        try {
+            await firebase.auth().sendPasswordResetEmail(email);
+            erroEl.textContent = "Enviamos um link para redefinir a senha no e-mail cadastrado.";
+            erroEl.classList.add("info");
+        } catch (erro) {
+            erroEl.textContent = "Não foi possível enviar o link. Confira o e-mail e tente novamente.";
+        }
+    });
+
+    $("btn-sair").addEventListener("click", () => {
+        const erroEl = $("login-erro");
+        if (erroEl) {
+            erroEl.textContent = "";
+            erroEl.classList.remove("info");
+        }
+        firebase.auth().signOut();
+    });
 
     firebase.auth().onAuthStateChanged((usuario) => {
         if (usuario) {
+            if (!emailProprietario()) {
+                $("login-erro").textContent = "Painel sem e-mail de proprietário configurado em config.js.";
+                firebase.auth().signOut();
+                return;
+            }
+            if (!ehProprietario(usuario)) {
+                $("login-erro").textContent = "Este painel é exclusivo do proprietário da loja.";
+                firebase.auth().signOut();
+                return;
+            }
             iniciarPainel();
         } else {
             $("tela-painel").classList.add("hidden");
