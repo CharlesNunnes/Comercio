@@ -161,6 +161,14 @@ Com o Firebase, o site fica em `https://pizzaria-rd.web.app`, instala no celular
    é desconectada automaticamente, mesmo que consiga se cadastrar no Firebase.
 6. O link **“Esqueci minha senha”** no painel envia o e-mail de redefinição para esse endereço.
 
+> **Situação atual:** o provedor E-mail/senha já está ativo e o usuário `admin@pointdord.com`
+> já foi criado. A senha inicial deve ser trocada pelo link “Esqueci minha senha” (ou em
+> Authentication > Users > redefinir senha).
+>
+> `admin@pointdord.com` é um endereço de exemplo e pode não receber mensagens. Para o
+> proprietário recuperar a senha sozinho, troque para o e-mail real dele nos três lugares
+> citados acima e republique as regras.
+
 ### 3.5 Publicar
 
 1. Instale o Firebase Tools: `npm install -g firebase-tools`
@@ -177,7 +185,8 @@ firebase deploy --only hosting,firestore:rules --project pizzaria-rd
 
 ### 3.6 Painel da loja
 
-Abra `https://pizzaria-rd.web.app/admin.html` e faça login com o e-mail/senha criados no item 3.4.
+Abra `https://pizzaria-rd.vercel.app/admin.html` (ou `https://pizzaria-rd.web.app/admin.html`,
+se publicar no Firebase Hosting) e faça login com o e-mail/senha do proprietário criados no item 3.4.
 
 Você vê os pedidos chegando **em tempo real** (com aviso sonoro), o total, os itens, e pode:
 - **buscar** por nome, telefone, endereço ou número do pedido
@@ -211,8 +220,20 @@ O site é 100% estático e funciona na Vercel sem servidor:
 4. O arquivo `vercel.json` evita cache antigo do `sw.js`, `config.js`, `firebase-config.js` e
    `manifest.json`.
 
-> Para o painel funcionar, publique as regras do Firestore (item 3.3) e ative o login da loja
-> (item 3.4). O site de pedidos funciona mesmo sem isso: o pedido continua indo pelo WhatsApp.
+**Endereços publicados:**
+
+| O quê | Endereço |
+| --- | --- |
+| Site / cardápio | https://pizzaria-rd.vercel.app |
+| Painel do proprietário | https://pizzaria-rd.vercel.app/admin.html |
+
+> As regras do Firestore já estão publicadas e o login do proprietário já está ativo.
+> Para publicar as regras novamente depois de editar `firestore.rules`, rode
+> `firebase deploy --only firestore:rules` na pasta do projeto.
+
+> Para trocar o e-mail do proprietário, atualize `config.js` (campo `adminEmail`),
+> `firestore.rules` (função `isProprietario()`), crie o novo usuário em
+> Authentication > Users e republique as regras.
 
 ### 3.9 Trocar as fotos do cardápio
 
