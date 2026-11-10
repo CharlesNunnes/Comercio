@@ -269,6 +269,7 @@
         padding: 9px 15px;
         font-size: 0.78rem;
         font-weight: 700;
+        white-space: nowrap;
         transition: all 0.2s ease;
     }
 
@@ -554,18 +555,245 @@
 
     .vazio i { display: block; font-size: 2rem; color: var(--gold); margin-bottom: 12px; }
 
+    /* ---------- MODAIS ---------- */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(6,5,4,0.78);
+        backdrop-filter: blur(6px);
+    }
+
+    .modal-card {
+        width: 100%;
+        max-width: 760px;
+        max-height: calc(100vh - 36px);
+        overflow-y: auto;
+        background: linear-gradient(180deg, var(--surface-2), var(--surface));
+        border: 1px solid var(--line-strong);
+        border-radius: 22px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+    }
+
+    .modal-card.estreito { max-width: 460px; }
+
+    .modal-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .modal-head h2 {
+        font-family: var(--font-display);
+        font-size: 1.9rem;
+        font-weight: 400;
+        letter-spacing: 0.03em;
+        line-height: 1;
+    }
+
+    .modal-sub { color: var(--muted-2); font-size: 0.8rem; margin-top: 4px; }
+
+    .modal-fechar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.04);
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .modal-fechar:hover {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(255,255,255,0.08);
+    }
+
+    .sangria-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .sangria-card {
+        background: var(--surface-3);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        min-width: 0;
+    }
+
+    .sangria-card h3 {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted-2);
+        font-weight: 700;
+    }
+
+    .sangria-valor {
+        font-family: var(--font-display);
+        font-size: 1.9rem;
+        line-height: 1.1;
+        margin: 6px 0 4px;
+        color: var(--gold-bright);
+        overflow-wrap: anywhere;
+    }
+
+    .sangria-meta { color: var(--muted); font-size: 0.76rem; line-height: 1.45; }
+
+    .sangria-pagamentos {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--line);
+        display: grid;
+        gap: 4px;
+    }
+
+    .sangria-linha {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 0.76rem;
+        color: var(--muted);
+    }
+
+    .sangria-linha strong { color: var(--text); font-weight: 600; }
+
+    .sangria-rodape { color: var(--muted-2); font-size: 0.72rem; margin-top: 16px; }
+
+    .sangria-carregando {
+        color: var(--muted);
+        font-size: 0.86rem;
+        padding: 24px 0;
+        text-align: center;
+    }
+
+    .modal-acoes {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .btn-modal {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .btn-modal:hover:not(:disabled) {
+        background: rgba(255,255,255,0.1);
+        border-color: var(--gold);
+        color: var(--gold);
+    }
+
+    .btn-modal.primary {
+        background: var(--gold);
+        border-color: var(--gold);
+        color: #1a1510;
+    }
+
+    .btn-modal.primary:hover:not(:disabled) {
+        background: var(--gold-bright);
+        border-color: var(--gold-bright);
+        color: #1a1510;
+    }
+
+    .btn-modal.perigo {
+        background: var(--red);
+        border-color: var(--red);
+        color: #fff;
+    }
+
+    .btn-modal.perigo:hover:not(:disabled) {
+        background: var(--red-bright);
+        border-color: var(--red-bright);
+        color: #fff;
+    }
+
+    .btn-modal:disabled { opacity: 0.4; cursor: default; }
+
+    .modal-perigo {
+        background: var(--red-soft);
+        border: 1px solid rgba(215,38,61,0.35);
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 0.84rem;
+        line-height: 1.55;
+        color: #ffb3bd;
+        display: grid;
+        gap: 8px;
+    }
+
+    .modal-perigo strong { color: #ff8a97; }
+
+    .modal-campo {
+        display: grid;
+        gap: 8px;
+        margin-top: 16px;
+        font-size: 0.82rem;
+        color: var(--muted);
+    }
+
+    .modal-campo input {
+        background: var(--surface-3);
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        padding: 11px 14px;
+        font-size: 0.9rem;
+        color: var(--text);
+        outline: none;
+    }
+
+    .modal-campo input:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(232,182,76,0.1);
+    }
+
+    .modal-erro { color: #ff8a97; font-size: 0.8rem; margin-top: 10px; min-height: 1.1em; }
+
     @media (max-width: 640px) {
         body { padding: 10px; }
         .topbar { padding: 12px 14px; border-radius: 16px; }
         .topbar-brand img { height: 40px; }
         .topbar-brand h1 { font-size: 1.45rem; }
-        .topbar-acoes { width: 100%; }
-        .topbar-acoes .btn-top { flex: 1; }
+        .topbar-acoes {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .topbar-acoes .btn-top { width: 100%; }
         .pedidos { grid-template-columns: 1fr; }
         .login-card { padding: 26px 20px; }
         .filtros-status { overflow-x: auto; flex-wrap: nowrap; width: 100%; padding-bottom: 4px; scrollbar-width: none; }
         .filtros-status::-webkit-scrollbar { display: none; }
         .filtro-status { flex-shrink: 0; }
+        .sangria-grid { grid-template-columns: 1fr; }
+        .modal-card { padding: 18px; border-radius: 18px; }
+        .modal-acoes .btn-modal { flex: 1; }
     }
 
     :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
@@ -610,6 +838,8 @@
         </div>
         <div class="topbar-acoes">
             <a href="index.html" class="btn-top">Ver site</a>
+            <button type="button" id="btn-sangria" class="btn-top"><i class="fa-solid fa-cash-register"></i> Sangria</button>
+            <button type="button" id="btn-limpar" class="btn-top danger"><i class="fa-solid fa-trash"></i> Limpar pedidos</button>
             <button type="button" id="btn-sair" class="btn-top danger">Sair</button>
         </div>
     </div>
@@ -633,6 +863,63 @@
 
     <div class="pedidos" id="pedidos">
         <p class="vazio">Carregando pedidos...</p>
+    </div>
+</div>
+
+<!-- ===== Sangria: faturamento do dia, do mês e do ano ===== -->
+<div class="modal-overlay hidden" id="modal-sangria" role="dialog" aria-modal="true" aria-labelledby="sangria-titulo">
+    <div class="modal-card">
+        <div class="modal-head">
+            <div>
+                <h2 id="sangria-titulo">Sangria</h2>
+                <p class="modal-sub">Faturamento do dia, do mês e do ano</p>
+            </div>
+            <button type="button" class="modal-fechar" data-fechar="modal-sangria" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="sangria-conteudo">
+            <p class="sangria-carregando">Calculando faturamento...</p>
+        </div>
+
+        <div class="modal-acoes">
+            <button type="button" class="btn-modal" id="btn-sangria-atualizar"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+            <button type="button" class="btn-modal primary" data-fechar="modal-sangria">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Limpar pedidos ===== -->
+<div class="modal-overlay hidden" id="modal-limpar" role="dialog" aria-modal="true" aria-labelledby="limpar-titulo">
+    <div class="modal-card estreito">
+        <div class="modal-head">
+            <div>
+                <h2 id="limpar-titulo">Limpar pedidos</h2>
+                <p class="modal-sub">Apaga todo o histórico salvo no Firebase</p>
+            </div>
+            <button type="button" class="modal-fechar" data-fechar="modal-limpar" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="modal-perigo">
+            <p><strong>Atenção:</strong> esta ação apaga <strong>todos os pedidos</strong> e não pode ser desfeita.</p>
+            <p>O relatório da sangria também deixa de considerar esses pedidos.</p>
+            <p>Os números dos pedidos continuam de onde pararam.</p>
+        </div>
+
+        <label class="modal-campo" for="limpar-confirmar">
+            <span>Digite <strong>LIMPAR</strong> para confirmar</span>
+            <input type="text" id="limpar-confirmar" placeholder="LIMPAR" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        </label>
+
+        <p class="modal-erro" id="limpar-erro"></p>
+
+        <div class="modal-acoes">
+            <button type="button" class="btn-modal" data-fechar="modal-limpar">Cancelar</button>
+            <button type="button" class="btn-modal perigo" id="btn-limpar-confirmar" disabled>Apagar todos os pedidos</button>
+        </div>
     </div>
 </div>
 
@@ -974,6 +1261,166 @@ async function mudarStatus(id, status) {
     }
 }
 
+/* ============================================================
+   SANGRIA (faturamento do dia, do mês e do ano)
+   ============================================================ */
+
+function dataDoPedido(p) {
+    try {
+        if (p.criadoTs && typeof p.criadoTs.toDate === "function") return p.criadoTs.toDate();
+    } catch (e) { /* segue para criadoEm */ }
+    if (p.criadoEm) {
+        const d = new Date(p.criadoEm);
+        if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+}
+
+function resumirPeriodo(pedidos, desde) {
+    const doPeriodo = pedidos.filter((p) => {
+        const d = dataDoPedido(p);
+        return d && d >= desde;
+    });
+
+    const validos = doPeriodo.filter((p) => p.status !== "cancelado");
+    const cancelados = doPeriodo.filter((p) => p.status === "cancelado");
+
+    const total = validos.reduce((soma, p) => soma + (Number(p.total) || 0), 0);
+    const totalCancelado = cancelados.reduce((soma, p) => soma + (Number(p.total) || 0), 0);
+
+    const porPagamento = {};
+    validos.forEach((p) => {
+        const forma = p.pagamento || "Não informado";
+        porPagamento[forma] = (porPagamento[forma] || 0) + (Number(p.total) || 0);
+    });
+
+    return {
+        total,
+        quantidade: validos.length,
+        ticket: validos.length ? total / validos.length : 0,
+        porPagamento,
+        cancelados: cancelados.length,
+        totalCancelado
+    };
+}
+
+function cartaoSangria(titulo, resumo) {
+    const pagamentos = Object.entries(resumo.porPagamento).sort((a, b) => b[1] - a[1]);
+
+    return `
+    <div class="sangria-card">
+        <h3>${escapar(titulo)}</h3>
+        <p class="sangria-valor">${moeda(resumo.total)}</p>
+        <p class="sangria-meta">${resumo.quantidade} pedido${resumo.quantidade === 1 ? "" : "s"} • ticket ${moeda(resumo.ticket)}</p>
+        ${resumo.cancelados ? `<p class="sangria-meta">${resumo.cancelados} cancelado${resumo.cancelados === 1 ? "" : "s"} (${moeda(resumo.totalCancelado)})</p>` : ""}
+        <div class="sangria-pagamentos">
+            ${pagamentos.length
+                ? pagamentos.map(([forma, valor]) => `
+                    <div class="sangria-linha"><span>${escapar(forma)}</span><strong>${moeda(valor)}</strong></div>
+                `).join("")
+                : '<p class="sangria-meta">Sem pedidos no período.</p>'}
+        </div>
+    </div>`;
+}
+
+async function carregarSangria() {
+    const alvo = $("sangria-conteudo");
+    if (!alvo) return;
+
+    if (!db) {
+        alvo.innerHTML = '<p class="modal-erro">Entre no painel para ver o faturamento.</p>';
+        return;
+    }
+
+    alvo.innerHTML = '<p class="sangria-carregando">Calculando faturamento...</p>';
+
+    try {
+        const agora = new Date();
+        const inicioDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+        const inicioAno = new Date(agora.getFullYear(), 0, 1);
+
+        const snap = await db.collection("pedidos")
+            .where("criadoTs", ">=", firebase.firestore.Timestamp.fromDate(inicioAno))
+            .get();
+
+        const pedidos = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        alvo.innerHTML = `
+            <div class="sangria-grid">
+                ${cartaoSangria("Hoje", resumirPeriodo(pedidos, inicioDia))}
+                ${cartaoSangria("Este mês", resumirPeriodo(pedidos, inicioMes))}
+                ${cartaoSangria("Este ano", resumirPeriodo(pedidos, inicioAno))}
+            </div>
+            <p class="sangria-rodape">Relatório gerado em ${escapar(agora.toLocaleString("pt-BR"))}. Pedidos cancelados não entram no faturamento.</p>
+        `;
+    } catch (erro) {
+        alvo.innerHTML = '<p class="modal-erro">Não foi possível calcular o faturamento: ' + escapar(erro.message) + '</p>';
+    }
+}
+
+/* ============================================================
+   MODAIS
+   ============================================================ */
+
+function abrirModal(id) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+function fecharModal(id) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.add("hidden");
+    if (!document.querySelector(".modal-overlay:not(.hidden)")) {
+        document.body.style.overflow = "";
+    }
+}
+
+/* ============================================================
+   LIMPAR PEDIDOS
+   ============================================================ */
+
+async function apagarTodosPedidos() {
+    const botao = $("btn-limpar-confirmar");
+    const erroEl = $("limpar-erro");
+    if (!db) {
+        erroEl.textContent = "Entre no painel para apagar os pedidos.";
+        return;
+    }
+
+    erroEl.textContent = "";
+    botao.disabled = true;
+    botao.textContent = "Apagando...";
+
+    let apagados = 0;
+
+    try {
+        while (true) {
+            const snap = await db.collection("pedidos").limit(400).get();
+            if (snap.empty) break;
+
+            const lote = db.batch();
+            snap.docs.forEach((doc) => lote.delete(doc.ref));
+            await lote.commit();
+
+            apagados += snap.size;
+        }
+
+        conhecidos = new Set();
+        $("limpar-confirmar").value = "";
+        fecharModal("modal-limpar");
+        aviso(`${apagados} pedido${apagados === 1 ? "" : "s"} apagado${apagados === 1 ? "" : "s"}.`);
+    } catch (erro) {
+        erroEl.textContent = "Não foi possível apagar: " + erro.message;
+    } finally {
+        botao.textContent = "Apagar todos os pedidos";
+        botao.disabled = normalizar($("limpar-confirmar").value) !== "limpar";
+    }
+}
+
 let conhecidos = new Set();
 let primeiraCarga = true;
 
@@ -1086,6 +1533,47 @@ function iniciar() {
             erroEl.classList.remove("info");
         }
         firebase.auth().signOut();
+    });
+
+    /* ---------- Sangria ---------- */
+    $("btn-sangria").addEventListener("click", () => {
+        abrirModal("modal-sangria");
+        carregarSangria();
+    });
+
+    $("btn-sangria-atualizar").addEventListener("click", carregarSangria);
+
+    /* ---------- Limpar pedidos ---------- */
+    $("btn-limpar").addEventListener("click", () => {
+        $("limpar-confirmar").value = "";
+        $("limpar-erro").textContent = "";
+        $("btn-limpar-confirmar").disabled = true;
+        abrirModal("modal-limpar");
+        $("limpar-confirmar").focus();
+    });
+
+    $("limpar-confirmar").addEventListener("input", (event) => {
+        $("btn-limpar-confirmar").disabled = normalizar(event.target.value) !== "limpar";
+    });
+
+    $("btn-limpar-confirmar").addEventListener("click", apagarTodosPedidos);
+
+    /* ---------- Fechar modais ---------- */
+    document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+        overlay.addEventListener("click", (event) => {
+            if (event.target === overlay) fecharModal(overlay.id);
+        });
+    });
+
+    document.querySelectorAll("[data-fechar]").forEach((btn) => {
+        btn.addEventListener("click", () => fecharModal(btn.dataset.fechar));
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            document.querySelectorAll(".modal-overlay:not(.hidden)")
+                .forEach((el) => fecharModal(el.id));
+        }
     });
 
     firebase.auth().onAuthStateChanged((usuario) => {

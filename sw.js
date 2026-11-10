@@ -4,7 +4,7 @@
    mesmo com internet fraca (offline parcial).
    ============================================================ */
 
-const VERSAO = "point-do-rd-v22";
+const VERSAO = "point-do-rd-v23";
 const CACHE_APP = `${VERSAO}-app`;
 const CACHE_IMAGENS = `${VERSAO}-imagens`;
 

@@ -199,6 +199,16 @@ Você vê os pedidos chegando **em tempo real** (com aviso sonoro), o total, os 
 - abrir o WhatsApp do cliente para falar sobre o pedido
 - pedidos com pagamento em **PIX** ganham o botão **“PIX — mostrar QR Code”** (QR do pagamento)
 
+**Botões de controle (no topo do painel):**
+
+- **Sangria** — abre um relatório com o faturamento de **hoje**, **este mês** e **este ano**,
+  mostrando quantidade de pedidos, ticket médio e o total por forma de pagamento
+  (PIX, Dinheiro, Cartão). Pedidos **cancelados não entram** no faturamento, mas aparecem
+  contados à parte. O botão **Atualizar** recalcula na hora.
+- **Limpar pedidos** — apaga **todos** os pedidos salvos no Firebase. Para evitar acidente,
+  é preciso digitar **LIMPAR** antes de confirmar. A ação não pode ser desfeita e também zera
+  o histórico usado pela sangria; os números dos pedidos continuam de onde pararam.
+
 > Com o site publicado no Firebase você NÃO precisa de computador ligado nem de servidor
 > rodando — nem para salvar os pedidos, nem para ver o painel.
 
