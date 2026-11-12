@@ -1081,12 +1081,19 @@ function renderizarPedido(p) {
         : "novo";
 
     const tel = String(p.telefone || "").replace(/\D/g, "");
-    const itens = (p.itens || []).map((i) => `
+    const itens = (p.itens || []).map((i) => {
+        if (i.tipo === "salgado") {
+            return `
+        <div class="item-linha">
+            <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (salgado)
+        </div>`;
+        }
+        return `
         <div class="item-linha">
             <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (${i.fatias} fatias)
             <span>${(i.sabores || []).map(escapar).join(", ")}</span>
-        </div>
-    `).join("");
+        </div>`;
+    }).join("");
 
     const statusAtual = p.status || "novo";
     const botao = (status, texto) => `

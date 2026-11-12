@@ -263,6 +263,22 @@ As fotos ficam em `imagem/cardapio/`. Cada sabor aponta para um arquivo em `scri
 > Dica: mantenha as fotos em JPG, com ~1200px de largura e abaixo de 200 KB, para o site abrir
 > rápido no celular.
 
+### 3.10 Salgados (pastel e coxinha)
+
+O catálogo de salgados fica em `script.js`, no array `salgados`:
+
+```js
+{ id: "pastel", nome: "Pastel", preco: 15, emoji: "🥟", descricao: "...", tags: ["Feito na hora"], image: "" }
+```
+
+- Cada salgado entra direto no carrinho, sem escolher tamanho ou sabor.
+- `preco` é o valor unitário; `emoji` aparece no card e no carrinho quando não há foto.
+- Para usar uma foto, preencha `image` com o caminho do arquivo (ex.: `"imagem/cardapio/pastel.jpg"`).
+- Para adicionar outro salgado, copie um item, troque `id`, `nome`, `preco` e `emoji`.
+- No painel `admin.html` e no cupom, os salgados aparecem como **“2x Pastel (salgado)”**.
+
+> Situação atual: **Pastel R$ 15,00** e **Coxinha R$ 10,00**, sem foto (usando emoji).
+
 ---
 
 ## 4. Ligar o site publicado ao servidor da loja (só com impressora)
@@ -332,7 +348,7 @@ O site do cliente continua funcionando normalmente (a criação de pedidos é p�
 | App não instala no celular | O site precisa estar em HTTPS (veja item 3) |
 | Pedido não abre no WhatsApp | Verifique o número em `config.js` → `whatsapp` (55 + DDD + número, só dígitos) |
 | Pedido não chega no servidor | Confira o endereço em `config.js` → `api` e se o túnel/servidor está rodando |
-| Alterei o site e o celular mostra a versão antiga | Aumente a versão em `sw.js` (`point-do-rd-v19` → `v20`) |
+| Alterei o site e o celular mostra a versão antiga | Aumente a versão em `sw.js` (`point-do-rd-v23` → `v24`) |
 
 ---
 

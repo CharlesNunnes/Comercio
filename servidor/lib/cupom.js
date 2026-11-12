@@ -80,8 +80,12 @@ function criarCupom(pedido, cfg = {}) {
 
     add("ITENS", { bold: true });
     (pedido.itens || []).forEach((item) => {
-        add(`${item.quantidade}x ${item.tamanho} (${item.fatias} fatias)`, { bold: true });
-        quebrar(`   Sabores: ${(item.sabores || []).join(", ")}`, largura).forEach((l) => add(l));
+        if (item.tipo === "salgado") {
+            add(`${item.quantidade}x ${item.tamanho} (salgado)`, { bold: true });
+        } else {
+            add(`${item.quantidade}x ${item.tamanho} (${item.fatias} fatias)`, { bold: true });
+            quebrar(`   Sabores: ${(item.sabores || []).join(", ")}`, largura).forEach((l) => add(l));
+        }
         add(alinhar(`   ${moeda(item.preco * item.quantidade)}`, largura, "right"));
     });
 

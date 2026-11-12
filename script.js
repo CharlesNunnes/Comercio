@@ -54,7 +54,7 @@ const sabores = [
     },
     {
         id: 4, name: "Portuguesa", categoria: "tradicional", image: "imagem/cardapio/portuguesa.jpg",
-        descricao: "Presunto, ovos, cebola, azeitona, ervilha e mussarela.",
+        descricao: "Presunto, ovos, cebola, azeitona e mussarela.",
         tags: ["Tradicional"]
     },
     {
@@ -98,6 +98,33 @@ const sabores = [
     // === ESPECIAIS ===
     // Para adicionar um sabor especial, copie uma linha acima e use:
     // { id: 20, name: "Nome do Sabor", categoria: "especial", image: "imagem/cardapio/arquivo.jpg", descricao: "...", tags: ["Especial"] }
+];
+
+// ============================
+// SALGADOS
+// ============================
+// Catálogo simples: cada item já tem preço fixo e entra direto no carrinho.
+// Para adicionar outro salgado, copie um item e troque id, nome, preco e emoji.
+// Se tiver foto, coloque em "image" (ex.: "imagem/cardapio/pastel.jpg").
+const salgados = [
+    {
+        id: "pastel",
+        nome: "Pastel",
+        preco: 15,
+        emoji: "🥟",
+        descricao: "Massa fina e crocante, frito na hora. Recheio à escolha da casa.",
+        tags: ["Feito na hora"],
+        image: ""
+    },
+    {
+        id: "coxinha",
+        nome: "Coxinha",
+        preco: 10,
+        emoji: "🍗",
+        descricao: "Recheio cremoso de frango com casquinha crocante.",
+        tags: ["Mais pedida"],
+        image: ""
+    }
 ];
 
 const NOMES_CATEGORIA = {
@@ -186,6 +213,7 @@ function quantidadeItens() {
 }
 
 function imagemDoItem(item) {
+    if (item.tipo === "salgado") return "";
     const id = item.saboresIds && item.saboresIds[0];
     const sabor = sabores.find((s) => s.id === Number(id));
     return sabor ? sabor.image : "imagem/cardapio/pizza-padrao.jpg";
@@ -288,6 +316,58 @@ function pedirDestaque(id) {
     sincronizarFiltrosCategoria();
     irParaPasso(2);
     toast(`${sabor.name} selecionada na pizza Média.`);
+}
+
+// ============================
+// RENDERIZAR SALGADOS
+// ============================
+function renderSalgados() {
+    const container = $("salgados-grid");
+    if (!container) return;
+
+    container.innerHTML = salgados.map((s) => {
+        const midia = s.image
+            ? `<img src="${s.image}" alt="${s.nome}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='${s.emoji}'">`
+            : s.emoji;
+        return `
+        <article class="salgado-card">
+            <div class="salgado-media">${midia}</div>
+            <div class="salgado-body">
+                <div class="salgado-top">
+                    <h3>${s.nome}</h3>
+                    <span class="salgado-preco">${moeda(s.preco)}</span>
+                </div>
+                <p class="salgado-desc">${s.descricao}</p>
+                <div class="salgado-foot">
+                    <button type="button" class="btn btn-gold btn-small" onclick="adicionarSalgado('${s.id}')">
+                        Adicionar <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </article>`;
+    }).join("");
+}
+
+function adicionarSalgado(id) {
+    const salgado = salgados.find((s) => s.id === id);
+    if (!salgado) return;
+
+    const igual = carrinho.find((i) => i.tipo === "salgado" && i.salgadoId === salgado.id);
+    if (igual) {
+        igual.qtd += 1;
+    } else {
+        carrinho.push({
+            tipo: "salgado",
+            salgadoId: salgado.id,
+            nome: salgado.nome,
+            emoji: salgado.emoji,
+            preco: salgado.preco,
+            qtd: 1
+        });
+    }
+
+    atualizarCartCount();
+    toast(`${salgado.nome} adicionado ao pedido!`, "Ver pedido", abrirResumo);
 }
 
 // ============================
@@ -502,13 +582,23 @@ function abrirModalCarrinho() {
             </div>`;
         if (btnFinalizar) btnFinalizar.disabled = true;
     } else {
-        container.innerHTML = carrinho.map((item, index) => `
+        container.innerHTML = carrinho.map((item, index) => {
+            const ehSalgado = item.tipo === "salgado";
+            const thumb = ehSalgado
+                ? `<div class="cart-item-thumb cart-item-emoji" aria-hidden="true">${item.emoji || "🥟"}</div>`
+                : `<img class="cart-item-thumb" src="${imagemDoItem(item)}" alt="" loading="lazy"
+                     onerror="this.onerror=null;this.src='imagem/cardapio/pizza-padrao.jpg'">`;
+            const titulo = ehSalgado
+                ? item.nome
+                : `${item.tamanho.label} • ${item.tamanho.fatias} fatias`;
+            const detalhe = ehSalgado ? "Salgado" : item.sabores.join(", ");
+
+            return `
             <div class="cart-item">
-                <img class="cart-item-thumb" src="${imagemDoItem(item)}" alt="" loading="lazy"
-                     onerror="this.onerror=null;this.src='imagem/cardapio/pizza-padrao.jpg'">
+                ${thumb}
                 <div class="cart-item-info">
-                    <h4>${item.tamanho.label} • ${item.tamanho.fatias} fatias</h4>
-                    <p>${item.sabores.join(", ")}</p>
+                    <h4>${titulo}</h4>
+                    <p>${detalhe}</p>
                     <p class="cart-item-preco">${moeda(item.preco * item.qtd)}</p>
                 </div>
                 <div class="cart-item-acoes">
@@ -522,7 +612,8 @@ function abrirModalCarrinho() {
                     </button>
                 </div>
             </div>
-        `).join("");
+        `;
+        }).join("");
         if (btnFinalizar) btnFinalizar.disabled = false;
     }
 
@@ -927,13 +1018,24 @@ function montarPedido() {
         observacao,
         taxaEntrega: Number(CONFIG.taxaEntrega || 0),
         total: totalComTaxa(),
-        itens: carrinho.map((item) => ({
-            tamanho: item.tamanho.label,
-            fatias: item.tamanho.fatias,
-            sabores: item.sabores,
-            quantidade: item.qtd,
-            preco: item.preco
-        })),
+        itens: carrinho.map((item) => (
+            item.tipo === "salgado"
+                ? {
+                    tipo: "salgado",
+                    tamanho: item.nome,
+                    fatias: 0,
+                    sabores: [],
+                    quantidade: item.qtd,
+                    preco: item.preco
+                }
+                : {
+                    tamanho: item.tamanho.label,
+                    fatias: item.tamanho.fatias,
+                    sabores: item.sabores,
+                    quantidade: item.qtd,
+                    preco: item.preco
+                }
+        )),
         origem: "site",
         criadoEm: new Date().toISOString()
     };
@@ -991,8 +1093,12 @@ function mensagemWhatsapp(pedido) {
     msg += `\n*ITENS*\n`;
 
     pedido.itens.forEach((item) => {
-        msg += `\n• *${item.quantidade}x ${item.tamanho}* (${item.fatias} fatias)\n`;
-        msg += `   Sabores: ${item.sabores.join(", ")}\n`;
+        if (item.tipo === "salgado") {
+            msg += `\n• *${item.quantidade}x ${item.tamanho}* (salgado)\n`;
+        } else {
+            msg += `\n• *${item.quantidade}x ${item.tamanho}* (${item.fatias} fatias)\n`;
+            msg += `   Sabores: ${item.sabores.join(", ")}\n`;
+        }
         msg += `   Valor: ${moeda(item.preco * item.quantidade)}\n`;
     });
 
@@ -1326,6 +1432,7 @@ window.addEventListener("DOMContentLoaded", () => {
     aplicarConfigLoja();
     initElements();
     renderDestaques();
+    renderSalgados();
     atualizarPagamentoUI();
     irParaPasso(1, false);
     atualizarCartCount();
@@ -1362,6 +1469,7 @@ Object.assign(window, {
     filtrarCategoria,
     selecionarPagamento,
     pedirDestaque,
+    adicionarSalgado,
     irParaPasso,
     alternarMenu,
     fecharMenu
