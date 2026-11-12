@@ -24,6 +24,8 @@ Este projeto tem quatro partes:
    (ou abra o terminal e rode `node servidor/server.js`).
 3. Abra no navegador: **http://localhost:3000**
 4. Painel da loja: **http://localhost:3000/admin**
+   Na primeira vez, clique em **Token** e cole o token que aparece no console
+   (veja a seção 6.1).
 
 Também dá para abrir o site direto pelo arquivo `index.html` (sem servidor). Nesse caso o pedido
 também vai para o WhatsApp normalmente — só não é possível instalar como app (para isso precisa de
@@ -39,7 +41,9 @@ em `servidor/dados/cupons/pedido-0001.txt`.
 > Depois de configurar a impressora aqui, abra `config.js` e mude
 > `impressaoAutomatica: false` para `true`. Sem isso o site continua enviando pelo WhatsApp.
 
-Abra `servidor/config.json` e escolha o tipo:
+Abra `servidor/config.json` e escolha o tipo. Se o arquivo não existir, copie
+`servidor/config.example.json` para `servidor/config.json` (o servidor também
+cria esse arquivo sozinho na primeira execução, já com um token novo).
 
 ### A) Impressora térmica com rede ( cabo de rede / Wi-Fi ) — **recomendado**
 
@@ -313,17 +317,108 @@ Pronto: o cliente pede no celular, o pedido cai no servidor da loja e sai na imp
 
 ---
 
-## 6. Segurança (opcional, recomendado)
+## 6. Segurança (leia antes de expor o servidor)
 
-Se o servidor ficar exposto na internet, coloque um token em `servidor/config.json`:
+### 6.1 Token do painel local (obrigatório)
 
-```json
-"seguranca": { "token": "uma-senha-grande-e-dificil" }
+O painel local mostra **nome, telefone e endereço dos clientes**. Por isso o servidor
+de impressão agora **exige um token** em todas as rotas administrativas.
+
+Na primeira execução o servidor gera um token aleatório e o salva em
+`servidor/config.json` (que está no `.gitignore` e **não** vai para o GitHub).
+O token aparece no console ao iniciar:
+
+```
+Token do painel (guarde em segredo):
+3f9c... (48 caracteres)
 ```
 
-Depois abra o painel com o token: `https://SEU-SERVIDOR/admin?token=uma-senha-grande-e-dificil`
+Abra `http://localhost:3000/admin`, clique em **Token** e cole esse valor.
+Ele fica salvo só no navegador da loja. Para trocar o token, pare o servidor,
+apague o valor em `servidor/config.json` → `"seguranca": { "token": "" }` e
+inicie de novo.
 
-O site do cliente continua funcionando normalmente (a criação de pedidos é pública).
+> O token **nunca** deve ir na URL. Se você usou links antigos com `?token=...`,
+> o painel agora guarda o token e limpa o endereço sozinho.
+>
+> **Nunca** exponha o servidor na internet sem HTTPS (Cloudflare Tunnel/ngrok).
+> HTTP puro envia o token e os pedidos sem criptografia.
+>
+> Se o site usar um domínio próprio (ex.: `https://pedidos.sualoja.com.br`) e for
+> esse domínio que chama o servidor, adicione-o em `servidor/config.json`:
+>
+> ```json
+> "seguranca": { "token": "...", "origens": ["https://pedidos.sualoja.com.br"] }
+> ```
+
+### 6.2 Firestore (painel da loja)
+
+As regras em `firestore.rules` já estão publicadas e fazem o seguinte:
+
+- qualquer pessoa pode **criar** um pedido, com validação de tipos, tamanhos e status;
+- **ler, alterar ou apagar** pedidos: somente o e-mail `admin@pointdord.com` logado;
+- o painel só pode alterar o campo `status` (não dá para forjar total ou cliente);
+- contadores do número do pedido só podem ser **lidos** e **incrementados de 1 em 1**.
+
+Ao mudar as regras, publique com:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+### 6.3 Conta do proprietário (faça agora)
+
+O e-mail `admin@pointdord.com` é um **placeholder** e o domínio `pointdord.com`
+não existe. Isso significa que:
+
+- o link “Esqueci minha senha” **não entrega** o e-mail;
+- se alguém registrar esse domínio no futuro, pode tentar recuperar a conta.
+
+Recomendado:
+
+1. Crie um e-mail real do proprietário (Gmail, Outlook etc.).
+2. No Firebase Console → **Authentication → Users**, adicione o novo e-mail e
+   redefina a senha; apague o usuário `admin@pointdord.com`.
+3. Troque o e-mail em `config.js` (`adminEmail`) **e** em `firestore.rules`
+   (função `isProprietario`) e publique as regras de novo.
+4. Ative **MFA** (Authentication → Sign-in method → Multi-factor authentication)
+   para a conta do proprietário.
+5. Mantenha o cadastro público (signup) **desativado** em Authentication → Settings.
+
+### 6.4 API key do Firebase
+
+A `apiKey` em `firebase-config.js` é pública por definição — quem protege os dados
+são as regras do Firestore. Mesmo assim, restrinja a chave no Google Cloud:
+
+1. Google Cloud Console → **APIs e serviços → Credenciais** → chave `Browser key`.
+2. Em **Restrições de aplicativo**, escolha **Sites** e adicione:
+   `https://pizzaria-rd.vercel.app/*`, `https://pizzaria-rd.web.app/*`,
+   `http://localhost:*/*`.
+3. Em **Restrições de API**, permita apenas Identity Toolkit, Firestore e
+   Firebase Installations (e o que o site realmente usa).
+
+Opcional: ative o **App Check** (Firebase Console → App Check) com reCAPTCHA v3
+para reduzir abuso na criação de pedidos.
+
+### 6.5 O que já está protegido no código
+
+- Painel `admin.html`: todos os campos vindos do banco são escapados (sem XSS);
+  ao sair, o painel limpa a tela, o listener e o cache local do Firestore.
+- Servidor local: bloqueia `../`, `%2f`, `//servidor`, arquivos ocultos e
+  `node_modules`; token só via cabeçalho `x-token`; CORS restrito aos domínios
+  do site; cabeçalhos de segurança e CSP; textos dos pedidos são limpos antes de
+  ir para a impressora (sem injeção de comandos ESC/POS).
+- Site: cabeçalhos de segurança/CSP na Vercel e no Firebase Hosting, `robots.txt`
+  bloqueando `/admin.html` e imagens sem metadados de GPS.
+
+### 6.6 Rotina de backup e privacidade (LGPD)
+
+- Faça backup de `servidor/dados/` (pedidos e cupons) e guarde offline.
+- Apague pedidos antigos pelo painel (**Limpar pedidos**) ou pelo Firestore.
+- Não compartilhe prints com dados de clientes em grupos/repositórios.
+- Se um pedido chegar com dados de outra pessoa, apague o registro.
+- Em caso de vazamento, troque o token do painel, a senha do Firebase e as
+  chaves da API imediatamente.
 
 ---
 
@@ -348,7 +443,9 @@ O site do cliente continua funcionando normalmente (a criação de pedidos é p�
 | App não instala no celular | O site precisa estar em HTTPS (veja item 3) |
 | Pedido não abre no WhatsApp | Verifique o número em `config.js` → `whatsapp` (55 + DDD + número, só dígitos) |
 | Pedido não chega no servidor | Confira o endereço em `config.js` → `api` e se o túnel/servidor está rodando |
-| Alterei o site e o celular mostra a versão antiga | Aumente a versão em `sw.js` (`point-do-rd-v23` → `v24`) |
+| Alterei o site e o celular mostra a versão antiga | Aumente a versão em `sw.js` (`point-do-rd-v24` → `v25`) |
+| Painel local pede token | Veja o token no console do servidor e clique em **Token** (seção 6.1) |
+| Perdi o token do painel local | Pare o servidor, apague o valor em `servidor/config.json` → `seguranca.token` e inicie de novo |
 
 ---
 
@@ -368,6 +465,8 @@ Pizzaria/
 ├─ firestore.rules     regras de segurança do banco
 ├─ manifest.json       configuração do app
 ├─ sw.js               cache offline
+├─ robots.txt          impede indexação do painel
+├─ .gitignore          protege config local, dados e segredos
 ├─ imagem/
 │  ├─ Logo-RD.png      arte da marca recortada (fundo transparente)
 │  ├─ Logo-RD-fundo-branco.png  arte original com fundo branco
@@ -378,7 +477,8 @@ Pizzaria/
 │  └─ cardapio/        fotos dos sabores (JPG otimizados)
 └─ servidor/
    ├─ server.js        servidor HTTP + API (só se tiver impressora)
-   ├─ config.json      configuração da impressora
+   ├─ config.json      configuração local + token (NÃO vai para o Git)
+   ├─ config.example.json  modelo de configuração para copiar
    ├─ admin.html       painel local de pedidos (servidor)
    ├─ iniciar.bat      inicia o servidor no Windows
    ├─ lib/cupom.js     layout do cupom

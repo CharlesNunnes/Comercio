@@ -962,7 +962,20 @@ function escapar(texto) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+/* Número do pedido sempre numérico (evita HTML vindo de um pedido forjado). */
+function numeroPedido(valor) {
+    const n = Number(valor);
+    if (!Number.isFinite(n) || n < 0) return "0000";
+    return String(Math.floor(n)).padStart(4, "0");
+}
+
+/* Só aceita status conhecidos; qualquer outro vira "novo". */
+function statusPedido(valor) {
+    return Object.prototype.hasOwnProperty.call(NOMES_STATUS, valor) ? valor : "novo";
 }
 
 function normalizar(texto) {
@@ -1072,39 +1085,42 @@ let todosPedidos = [];
 let filtroStatus = "todos";
 let buscaPedidos = "";
 let db = null;
+let pararEscuta = null;
 
 function renderizarPedido(p) {
-    const classe = p.status === "entregue" ? "entregue"
-        : p.status === "cancelado" ? "cancelado"
-        : p.status === "em_preparo" ? "em_preparo"
-        : p.status === "saiu_entrega" ? "saiu_entrega"
+    const statusAtual = statusPedido(p.status);
+    const classe = statusAtual === "entregue" ? "entregue"
+        : statusAtual === "cancelado" ? "cancelado"
+        : statusAtual === "em_preparo" ? "em_preparo"
+        : statusAtual === "saiu_entrega" ? "saiu_entrega"
         : "novo";
+    const idSeguro = escapar(p.id);
+    const numero = numeroPedido(p.numero);
 
     const tel = String(p.telefone || "").replace(/\D/g, "");
     const itens = (p.itens || []).map((i) => {
         if (i.tipo === "salgado") {
             return `
         <div class="item-linha">
-            <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (salgado)
+            <strong>${escapar(i.quantidade)}x ${escapar(i.tamanho)}</strong> (salgado)
         </div>`;
         }
         return `
         <div class="item-linha">
-            <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (${i.fatias} fatias)
+            <strong>${escapar(i.quantidade)}x ${escapar(i.tamanho)}</strong> (${escapar(i.fatias)} fatias)
             <span>${(i.sabores || []).map(escapar).join(", ")}</span>
         </div>`;
     }).join("");
 
-    const statusAtual = p.status || "novo";
     const botao = (status, texto) => `
         <button type="button" data-status="${status}" ${statusAtual === status ? "disabled" : ""}>${texto}</button>
     `;
 
     return `
-    <div class="pedido ${classe}" data-id="${p.id}">
+    <div class="pedido ${classe}" data-id="${idSeguro}">
         <div class="pedido-topo">
-            <span class="pedido-num">#${String(p.numero || 0).padStart(4, "0")}</span>
-            <span class="pedido-hora">${hora(p.criadoEm)}</span>
+            <span class="pedido-num">#${numero}</span>
+            <span class="pedido-hora">${escapar(hora(p.criadoEm))}</span>
         </div>
 
         <div>
@@ -1119,7 +1135,7 @@ function renderizarPedido(p) {
 
         <div class="pedido-rodape">
             <div class="tags">
-                <span class="tag ${classe}">${NOMES_STATUS[statusAtual] || statusAtual}</span>
+                <span class="tag ${classe}">${escapar(NOMES_STATUS[statusAtual])}</span>
                 <span class="tag">${escapar(p.pagamento || "")}</span>
                 ${p.troco ? `<span class="tag">Troco: ${escapar(p.troco)}</span>` : ""}
             </div>
@@ -1131,8 +1147,8 @@ function renderizarPedido(p) {
             ${botao("saiu_entrega", "Saiu p/ entrega")}
             ${botao("entregue", "Entregue")}
             ${botao("cancelado", "Cancelar")}
-            ${tel ? `<button type="button" class="btn-avisar-cliente" data-id="${p.id}">Avisar cliente</button>` : ""}
-            ${tel ? `<a class="btn-whats" href="https://wa.me/${telefoneParaWa(p.telefone)}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+            ${tel ? `<button type="button" class="btn-avisar-cliente" data-id="${idSeguro}">Avisar cliente</button>` : ""}
+            ${tel ? `<a class="btn-whats" href="https://wa.me/${telefoneParaWa(p.telefone)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>` : ""}
         </div>
 
         ${p.pagamento === "PIX" ? `
@@ -1432,7 +1448,7 @@ let conhecidos = new Set();
 let primeiraCarga = true;
 
 function escutarPedidos() {
-    db.collection("pedidos")
+    pararEscuta = db.collection("pedidos")
         .orderBy("criadoTs", "desc")
         .limit(100)
         .onSnapshot((snapshot) => {
@@ -1459,7 +1475,27 @@ function escutarPedidos() {
         });
 }
 
+function limparPainel() {
+    if (typeof pararEscuta === "function") {
+        try { pararEscuta(); } catch (e) { /* ignora */ }
+    }
+    pararEscuta = null;
+    db = null;
+    todosPedidos = [];
+    pedidosPorId = new Map();
+    conhecidos = new Set();
+    primeiraCarga = true;
+    const pedidosEl = $("pedidos");
+    if (pedidosEl) pedidosEl.innerHTML = "";
+    const contadorEl = $("contador");
+    if (contadorEl) contadorEl.textContent = "";
+}
+
 function iniciarPainel() {
+    if (typeof pararEscuta === "function") {
+        try { pararEscuta(); } catch (e) { /* ignora */ }
+        pararEscuta = null;
+    }
     $("tela-login").classList.add("hidden");
     $("tela-painel").classList.remove("hidden");
 
@@ -1533,13 +1569,19 @@ function iniciar() {
         }
     });
 
-    $("btn-sair").addEventListener("click", () => {
+    $("btn-sair").addEventListener("click", async () => {
         const erroEl = $("login-erro");
         if (erroEl) {
             erroEl.textContent = "";
             erroEl.classList.remove("info");
         }
-        firebase.auth().signOut();
+        limparPainel();
+        try {
+            await firebase.auth().signOut();
+        } catch (e) { /* ignora */ }
+        try {
+            await firebase.firestore().clearPersistence();
+        } catch (e) { /* cache offline indisponível */ }
     });
 
     /* ---------- Sangria ---------- */
@@ -1597,6 +1639,7 @@ function iniciar() {
             }
             iniciarPainel();
         } else {
+            limparPainel();
             $("tela-painel").classList.add("hidden");
             $("tela-login").classList.remove("hidden");
         }

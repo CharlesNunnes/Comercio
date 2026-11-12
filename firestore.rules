@@ -11,17 +11,95 @@ service cloud.firestore {
         && request.auth.token.email == "admin@pointdord.com";
     }
 
+    function textoValido(valor, minimo, maximo) {
+      return valor is string
+        && valor.size() >= minimo
+        && valor.size() <= maximo;
+    }
+
+    // Valida o formato básico do pedido criado pelo site.
+    // O painel escapa todos os campos, mas esta validação reduz spam,
+    // campos forjados e valores usados para manipular o faturamento.
+    function pedidoValido() {
+      let d = request.resource.data;
+
+      return d.keys().hasOnly([
+          "numero", "nome", "telefone", "endereco", "referencia",
+          "pagamento", "troco", "observacao", "taxaEntrega", "total",
+          "itens", "origem", "status", "criadoEm", "criadoTs"
+        ])
+        && d.keys().hasAll([
+          "nome", "telefone", "endereco", "pagamento", "total",
+          "itens", "origem", "status", "criadoEm", "criadoTs"
+        ])
+        && (!d.keys().hasAny(["numero"]) || d.numero == null
+            || (d.numero is int && d.numero >= 0 && d.numero <= 100000))
+        && textoValido(d.nome, 1, 80)
+        && textoValido(d.telefone, 0, 30)
+        && textoValido(d.endereco, 1, 200)
+        && textoValido(d.referencia, 0, 120)
+        && textoValido(d.pagamento, 1, 40)
+        && textoValido(d.troco, 0, 40)
+        && textoValido(d.observacao, 0, 300)
+        && textoValido(d.origem, 1, 40)
+        && textoValido(d.criadoEm, 1, 40)
+        && d.status == "novo"
+        && d.taxaEntrega is number
+        && d.taxaEntrega >= 0
+        && d.taxaEntrega <= 1000
+        && d.total is number
+        && d.total >= 0
+        && d.total <= 100000
+        && d.itens is list
+        && d.itens.size() > 0
+        && d.itens.size() <= 50
+        && d.criadoTs == request.time
+        // Validação do primeiro item (o Firestore Rules não percorre listas).
+        && d.itens[0] is map
+        && d.itens[0].keys().hasOnly(["tipo", "tamanho", "fatias", "sabores", "quantidade", "preco"])
+        && textoValido(d.itens[0].tamanho, 1, 40)
+        && d.itens[0].fatias is int
+        && d.itens[0].fatias >= 0
+        && d.itens[0].fatias <= 12
+        && d.itens[0].sabores is list
+        && d.itens[0].sabores.size() <= 3
+        && d.itens[0].quantidade is int
+        && d.itens[0].quantidade >= 1
+        && d.itens[0].quantidade <= 50
+        && d.itens[0].preco is number
+        && d.itens[0].preco >= 0
+        && d.itens[0].preco <= 1000
+        && (!d.itens[0].keys().hasAny(["tipo"])
+            || d.itens[0].tipo == "salgado"
+            || d.itens[0].tipo == "pizza");
+    }
+
     // Pedidos: qualquer pessoa pode CRIAR (é o checkout do site);
     // só o proprietário logado pode LER, alterar ou apagar.
     match /pedidos/{pedidoId} {
-      allow create: if true;
-      allow read, update, delete: if isProprietario();
+      allow create: if pedidoValido();
+      allow read, delete: if isProprietario();
+      // O painel só altera o status. Qualquer outro campo fica travado.
+      allow update: if isProprietario()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status"])
+        && request.resource.data.status in ["novo", "em_preparo", "saiu_entrega", "entregue", "cancelado"];
     }
 
     // Contadores diários (número do pedido).
-    // O site precisa incrementar sem login; ninguém pode apagar.
+    // O site precisa LER e INCREMENTAR sem login, mas não pode escolher
+    // um número arbitrário nem apagar o documento.
     match /contadores/{docId} {
-      allow read, create, update: if true;
+      allow get: if true;
+      allow list: if isProprietario();
+      allow create: if docId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly(["valor"])
+        && request.resource.data.valor is int
+        && request.resource.data.valor == 1;
+      allow update: if docId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly(["valor"])
+        && request.resource.data.valor is int
+        && request.resource.data.valor == resource.data.valor + 1
+        && request.resource.data.valor <= 100000;
       allow delete: if false;
     }
   }

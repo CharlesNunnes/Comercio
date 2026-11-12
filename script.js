@@ -1181,8 +1181,9 @@ async function finalizarPedido() {
 function abrirWhatsapp(pedido) {
     const link = mensagemWhatsapp(pedido);
     try {
-        const janela = window.open(link, "_blank");
-        return Boolean(janela);
+        // noopener/noreferrer impede que a página aberta controle esta aba.
+        window.open(link, "_blank", "noopener,noreferrer");
+        return true;
     } catch (erro) {
         return false;
     }

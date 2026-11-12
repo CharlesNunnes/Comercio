@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Painel da loja: apenas o proprietário deve abrir este endereço.
+Disallow: /admin.html

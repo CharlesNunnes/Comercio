@@ -145,9 +145,9 @@
         <span id="status-texto">Verificando impressora...</span>
     </div>
     <div class="acoes">
-        <button type="button" onclick="carregar()">Atualizar</button>
-        <button type="button" class="primary" onclick="testarImpressao()">Testar impressão</button>
-        <button type="button" onclick="configurarToken()">Token</button>
+        <button type="button" data-acao="atualizar">Atualizar</button>
+        <button type="button" class="primary" data-acao="teste">Testar impressão</button>
+        <button type="button" data-acao="token">Token</button>
     </div>
 </header>
 
@@ -158,224 +158,279 @@
 </div>
 
 <script>
-const token = new URLSearchParams(location.search).get("token") || localStorage.getItem("point-rd-token") || "";
-let ultimoTotal = 0;
-let audioCtx = null;
+(function () {
+    "use strict";
 
-function comToken(url) {
-    if (!token) return url;
-    return url + (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(token);
-}
+    const CHAVE_TOKEN = "point-rd-token";
 
-function headers() {
-    return token ? { "x-token": token } : {};
-}
-
-function aviso(texto, tempo = 6000) {
-    const el = document.getElementById("aviso");
-    el.textContent = texto;
-    el.classList.add("visivel");
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove("visivel"), tempo);
-}
-
-function configurarToken() {
-    const atual = localStorage.getItem("point-rd-token") || "";
-    const novo = prompt("Token do painel (deixe vazio se não configurou):", atual);
-    if (novo === null) return;
-    localStorage.setItem("point-rd-token", novo.trim());
-    location.reload();
-}
-
-function beep() {
+    // O token nunca deve ficar na URL (fica no histórico e em logs).
+    // Se um link antigo trouxe ?token=..., guarda e limpa o endereço.
     try {
-        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = 880;
-        gain.gain.value = 0.25;
-        osc.connect(gain).connect(audioCtx.destination);
-        osc.start();
-        osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15);
-        osc.stop(audioCtx.currentTime + 0.35);
-    } catch (e) { /* sem áudio */ }
-}
+        const params = new URLSearchParams(location.search);
+        const daUrl = params.get("token");
+        if (daUrl) {
+            localStorage.setItem(CHAVE_TOKEN, daUrl.trim());
+            params.delete("token");
+            const busca = params.toString();
+            history.replaceState(null, "", location.pathname + (busca ? "?" + busca : "") + location.hash);
+        }
+    } catch (e) { /* ignora */ }
 
-function hora(iso) {
-    const d = new Date(iso);
-    return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
+    let token = localStorage.getItem(CHAVE_TOKEN) || "";
+    let ultimoTotal = 0;
+    let audioCtx = null;
+    let pedidosPorId = new Map();
 
-function moeda(v) {
-    return "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
-}
-
-async function verificarStatus() {
-    const dot = document.getElementById("dot");
-    const texto = document.getElementById("status-texto");
-    try {
-        const resp = await fetch("/api/status", { cache: "no-store" });
-        const dados = await resp.json();
-        const imp = dados.impressora || {};
-        dot.className = "dot " + (imp.ok ? "on" : "off");
-        texto.textContent = imp.ok
-            ? (imp.tipo === "arquivo" ? "Modo teste: cupom em arquivo" : `Impressora OK (${imp.tipo})`)
-            : `Impressora: ${imp.mensagem}`;
-    } catch (e) {
-        dot.className = "dot off";
-        texto.textContent = "Servidor sem resposta";
+    function headers() {
+        return token ? { "x-token": token } : {};
     }
-}
 
-async function carregar() {
-    try {
-        const resp = await fetch(comToken("/api/pedidos?limite=60"), { headers: headers(), cache: "no-store" });
-        if (resp.status === 401) {
-            document.getElementById("pedidos").innerHTML =
-                '<p class="vazio">Token inválido. Clique em "Token" e informe o token do config.json.</p>';
+    function aviso(texto, tempo = 6000) {
+        const el = document.getElementById("aviso");
+        el.textContent = texto;
+        el.classList.add("visivel");
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.classList.remove("visivel"), tempo);
+    }
+
+    function configurarToken() {
+        const atual = localStorage.getItem(CHAVE_TOKEN) || "";
+        const novo = prompt(
+            "Token do painel (aparece no console ao iniciar o servidor).\nDeixe vazio apenas se o servidor não usar token:",
+            atual
+        );
+        if (novo === null) return;
+        localStorage.setItem(CHAVE_TOKEN, novo.trim());
+        location.reload();
+    }
+
+    function beep() {
+        try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.value = 880;
+            gain.gain.value = 0.25;
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start();
+            osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.15);
+            osc.stop(audioCtx.currentTime + 0.35);
+        } catch (e) { /* sem áudio */ }
+    }
+
+    function hora(iso) {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "--/-- --:--";
+        return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function moeda(v) {
+        return "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+    }
+
+    /* Número sempre numérico: evita HTML vindo de um pedido forjado. */
+    function numeroPedido(valor) {
+        const n = Number(valor);
+        if (!Number.isFinite(n) || n < 0) return "0000";
+        return String(Math.floor(n)).padStart(4, "0");
+    }
+
+    /* Só aceita status conhecidos. */
+    function statusPedido(valor) {
+        return ["novo", "em_preparo", "saiu_entrega", "entregue", "cancelado"].includes(valor)
+            ? valor
+            : "novo";
+    }
+
+    function escapar(texto) {
+        return String(texto == null ? "" : texto)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    async function verificarStatus() {
+        const dot = document.getElementById("dot");
+        const texto = document.getElementById("status-texto");
+        try {
+            const resp = await fetch("/api/status", { cache: "no-store" });
+            const dados = await resp.json();
+            const imp = dados.impressora || {};
+            dot.className = "dot " + (imp.ok ? "on" : "off");
+            texto.textContent = imp.ok
+                ? (imp.tipo === "arquivo" ? "Modo teste: cupom em arquivo" : `Impressora OK (${imp.tipo})`)
+                : `Impressora: ${imp.mensagem}`;
+        } catch (e) {
+            dot.className = "dot off";
+            texto.textContent = "Servidor sem resposta";
+        }
+    }
+
+    async function carregar() {
+        const container = document.getElementById("pedidos");
+        try {
+            const resp = await fetch("/api/pedidos?limite=60", { headers: headers(), cache: "no-store" });
+            if (resp.status === 401) {
+                container.innerHTML =
+                    '<p class="vazio">Token inválido ou não informado. Clique em "Token" e informe o token que aparece no console do servidor.</p>';
+                return;
+            }
+            const dados = await resp.json();
+            renderizar(dados.pedidos || []);
+        } catch (e) {
+            container.innerHTML =
+                '<p class="vazio">Não foi possível carregar os pedidos. O servidor está rodando?</p>';
+        }
+    }
+
+    function renderizar(lista) {
+        const container = document.getElementById("pedidos");
+        const total = lista.length;
+        pedidosPorId = new Map(lista.map((p) => [String(p.id), p]));
+
+        document.getElementById("contador").textContent =
+            `${total} pedido${total === 1 ? "" : "s"} • ${lista.filter((p) => statusPedido(p.status) === "novo").length} novo(s)`;
+
+        if (total > ultimoTotal) beep();
+        ultimoTotal = total;
+
+        if (!total) {
+            container.innerHTML = '<p class="vazio">Nenhum pedido ainda. Os pedidos aparecem aqui automaticamente.</p>';
             return;
         }
-        const dados = await resp.json();
-        renderizar(dados.pedidos || []);
-    } catch (e) {
-        document.getElementById("pedidos").innerHTML =
-            '<p class="vazio">Não foi possível carregar os pedidos. O servidor está rodando?</p>';
-    }
-}
 
-function renderizar(lista) {
-    const container = document.getElementById("pedidos");
-    const total = lista.length;
+        container.innerHTML = lista.map((p) => {
+            const status = statusPedido(p.status);
+            const classe = status === "novo" ? "novo" : status;
+            const tagImp = p.impresso
+                ? '<span class="tag impresso">Impresso</span>'
+                : '<span class="tag erro">Não impresso</span>';
 
-    document.getElementById("contador").textContent =
-        `${total} pedido${total === 1 ? "" : "s"} • ${lista.filter(p => p.status === "novo").length} novo(s)`;
-
-    if (lista.length > ultimoTotal) beep();
-    ultimoTotal = total;
-
-    if (!lista.length) {
-        container.innerHTML = '<p class="vazio">Nenhum pedido ainda. Os pedidos aparecem aqui automaticamente.</p>';
-        return;
-    }
-
-    container.innerHTML = lista.map((p) => {
-        const classe = p.status === "entregue" ? "entregue" : p.status === "cancelado" ? "cancelado" : p.status === "novo" ? "novo" : "";
-        const tagImp = p.impresso
-            ? '<span class="tag impresso">Impresso</span>'
-            : '<span class="tag erro">Não impresso</span>';
-
-        return `
-        <div class="pedido ${classe}">
-            <div class="pedido-topo">
-                <span class="pedido-num">#${String(p.numero).padStart(4, "0")}</span>
-                <span class="pedido-hora">${hora(p.criadoEm)}</span>
-            </div>
-
-            <div>
-                <div class="pedido-cliente">${escapar(p.nome)} ${p.telefone ? "• " + escapar(p.telefone) : ""}</div>
-                <div class="pedido-end">${escapar(p.endereco)}</div>
-            </div>
-
-            <div class="pedido-itens">
-                ${(p.itens || []).map((i) => `
-                    <div class="item-linha">
-                        <strong>${i.quantidade}x ${escapar(i.tamanho)}</strong> (${i.fatias} fatias)
-                        <span>${(i.sabores || []).map(escapar).join(", ")}</span>
-                    </div>
-                `).join("")}
-            </div>
-
-            ${p.observacao ? `<div class="obs">📝 ${escapar(p.observacao)}</div>` : ""}
-
-            <div class="pedido-rodape">
-                <div>
-                    <span class="tag">${escapar(p.pagamento)}</span>
-                    ${p.troco ? `<span class="tag">Troco: ${escapar(p.troco)}</span>` : ""}
-                    ${tagImp}
+            return `
+            <div class="pedido ${classe}">
+                <div class="pedido-topo">
+                    <span class="pedido-num">#${numeroPedido(p.numero)}</span>
+                    <span class="pedido-hora">${escapar(hora(p.criadoEm))}</span>
                 </div>
-                <span class="pedido-total">${moeda(p.total)}</span>
-            </div>
 
-            <div class="pedido-botoes">
-                <button type="button" class="ok" onclick="mudarStatus('${p.id}', 'em_preparo')">Em preparo</button>
-                <button type="button" class="ok" onclick="mudarStatus('${p.id}', 'saiu_entrega')">Saiu p/ entrega</button>
-                <button type="button" onclick="mudarStatus('${p.id}', 'entregue')">Entregue</button>
-                <button type="button" class="primary" onclick="reimprimir('${p.id}')">Reimprimir</button>
-                <button type="button" class="danger" onclick="mudarStatus('${p.id}', 'cancelado')">Cancelar</button>
-            </div>
-        </div>`;
-    }).join("");
-}
+                <div>
+                    <div class="pedido-cliente">${escapar(p.nome)} ${p.telefone ? "• " + escapar(p.telefone) : ""}</div>
+                    <div class="pedido-end">${escapar(p.endereco)}</div>
+                </div>
 
-function escapar(texto) {
-    return String(texto == null ? "" : texto)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-}
+                <div class="pedido-itens">
+                    ${(Array.isArray(p.itens) ? p.itens : []).map((i) => {
+                        const quantidade = Number(i.quantidade);
+                        const qtd = Number.isFinite(quantidade) && quantidade > 0 ? Math.floor(quantidade) : 0;
+                        if (i.tipo === "salgado") {
+                            return `
+                        <div class="item-linha">
+                            <strong>${qtd}x ${escapar(i.tamanho)}</strong> (salgado)
+                        </div>`;
+                        }
+                        const fatias = Number(i.fatias);
+                        const fatiasTxt = Number.isFinite(fatias) && fatias >= 0 ? Math.floor(fatias) : 0;
+                        return `
+                        <div class="item-linha">
+                            <strong>${qtd}x ${escapar(i.tamanho)}</strong> (${fatiasTxt} fatias)
+                            <span>${(Array.isArray(i.sabores) ? i.sabores : []).map(escapar).join(", ")}</span>
+                        </div>`;
+                    }).join("")}
+                </div>
 
-async function mudarStatus(id, status) {
-    try {
-        const resp = await fetch(comToken(`/api/pedidos/${id}/status`), {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json", ...headers() },
-            body: JSON.stringify({ status })
-        });
-        const dados = await resp.json();
-        if (!dados.ok) throw new Error(dados.erro || "Erro");
-        carregar();
-    } catch (e) {
-        aviso("Não foi possível atualizar: " + e.message);
+                ${p.observacao ? `<div class="obs">📝 ${escapar(p.observacao)}</div>` : ""}
+
+                <div class="pedido-rodape">
+                    <div>
+                        <span class="tag">${escapar(p.pagamento)}</span>
+                        ${p.troco ? `<span class="tag">Troco: ${escapar(p.troco)}</span>` : ""}
+                        ${tagImp}
+                    </div>
+                    <span class="pedido-total">${moeda(p.total)}</span>
+                </div>
+
+                <div class="pedido-botoes">
+                    <button type="button" class="ok" data-id="${escapar(p.id)}" data-status="em_preparo">Em preparo</button>
+                    <button type="button" class="ok" data-id="${escapar(p.id)}" data-status="saiu_entrega">Saiu p/ entrega</button>
+                    <button type="button" data-id="${escapar(p.id)}" data-status="entregue">Entregue</button>
+                    <button type="button" data-reimprimir="${escapar(p.id)}">Reimprimir</button>
+                    <button type="button" class="danger" data-id="${escapar(p.id)}" data-status="cancelado">Cancelar</button>
+                </div>
+            </div>`;
+        }).join("");
     }
-}
 
-async function reimprimir(id) {
-    try {
-        const resp = await fetch(comToken(`/api/pedidos/${id}/reimprimir`), {
-            method: "POST",
-            headers: headers()
-        });
-        const dados = await resp.json();
-        aviso(dados.ok ? "Cupom reenviado para a impressora." : "Falha ao imprimir: " + dados.mensagem);
-        carregar();
-    } catch (e) {
-        aviso("Erro ao reimprimir: " + e.message);
+    async function mudarStatus(id, status) {
+        if (!["em_preparo", "saiu_entrega", "entregue", "cancelado"].includes(status)) return;
+        try {
+            const resp = await fetch(`/api/pedidos/${encodeURIComponent(id)}/status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json", ...headers() },
+                body: JSON.stringify({ status })
+            });
+            const dados = await resp.json();
+            if (!dados.ok) throw new Error(dados.erro || "Erro");
+            carregar();
+        } catch (e) {
+            aviso("Não foi possível atualizar: " + e.message);
+        }
     }
-}
 
-async function testarImpressao() {
-    try {
-        const resp = await fetch(comToken("/api/teste-impressao"), {
-            method: "POST",
-            headers: headers()
-        });
-        const dados = await resp.json();
-        aviso(dados.ok ? "Cupom de teste enviado." : "Falha: " + dados.mensagem);
-    } catch (e) {
-        aviso("Erro no teste: " + e.message);
+    async function reimprimir(id) {
+        try {
+            const resp = await fetch(`/api/pedidos/${encodeURIComponent(id)}/reimprimir`, {
+                method: "POST",
+                headers: headers()
+            });
+            const dados = await resp.json();
+            aviso(dados.ok ? "Cupom reenviado para a impressora." : "Falha ao imprimir: " + dados.mensagem);
+            carregar();
+        } catch (e) {
+            aviso("Erro ao reimprimir: " + e.message);
+        }
     }
-}
 
-// Atualização em tempo real (SSE) com queda para polling
-function conectarEventos() {
-    if (!("EventSource" in window)) return;
-    const fonte = new EventSource(comToken("/api/eventos"));
-    fonte.addEventListener("pedido", (evento) => {
-        beep();
-        aviso("Novo pedido recebido!");
-        carregar();
+    async function testarImpressao() {
+        try {
+            const resp = await fetch("/api/teste-impressao", {
+                method: "POST",
+                headers: headers()
+            });
+            const dados = await resp.json();
+            aviso(dados.ok ? "Cupom de teste enviado." : "Falha: " + dados.mensagem);
+        } catch (e) {
+            aviso("Erro no teste: " + e.message);
+        }
+    }
+
+    // Ações dos botões (sem onclick inline, para não interpretar HTML).
+    document.addEventListener("click", (evento) => {
+        const alvo = evento.target.closest("button");
+        if (!alvo) return;
+
+        if (alvo.dataset.status) {
+            const pedido = pedidosPorId.get(String(alvo.dataset.id));
+            if (pedido) mudarStatus(pedido.id, alvo.dataset.status);
+            return;
+        }
+        if (alvo.dataset.reimprimir) {
+            reimprimir(alvo.dataset.reimprimir);
+            return;
+        }
+        if (alvo.dataset.acao === "atualizar") carregar();
+        else if (alvo.dataset.acao === "teste") testarImpressao();
+        else if (alvo.dataset.acao === "token") configurarToken();
     });
-    fonte.addEventListener("atualizado", () => carregar());
-    fonte.onerror = () => { /* o navegador reconecta sozinho */ };
-}
 
-verificarStatus();
-carregar();
-conectarEventos();
-setInterval(carregar, 15000);
-setInterval(verificarStatus, 30000);
+    verificarStatus();
+    carregar();
+    // Atualização por polling: o token vai no cabeçalho, nunca na URL.
+    setInterval(carregar, 10000);
+    setInterval(verificarStatus, 30000);
+})();
 </script>
 </body>
 </html>

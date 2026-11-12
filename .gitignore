@@ -1,0 +1,36 @@
+# ============================================================
+# Arquivos locais e segredos que NUNCA devem ir para o GitHub
+# ============================================================
+
+# Configuração local do servidor de impressão (contém o token do painel
+# e o IP da impressora da loja). Use servidor/config.example.json como base.
+servidor/config.json
+
+# Pedidos, cupons e backups gerados pelo servidor local
+servidor/dados/
+*.log
+logs/
+
+# Variáveis de ambiente e credenciais
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+serviceAccount*.json
+*-service-account.json
+firebase-adminsdk*.json
+.google-credentials/
+.aws/
+.netrc
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Dependências
+node_modules/
