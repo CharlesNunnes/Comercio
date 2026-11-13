@@ -30,10 +30,10 @@ window.POINT_RD = {
     // ============================
     // ACESSO AO PAINEL DE PEDIDOS
     // ============================
-    // Só este e-mail consegue abrir o painel admin.html e ler os pedidos.
-    // Precisa ser o MESMO e-mail cadastrado no Firebase Authentication
-    // (Authentication > Users) e o MESMO usado em firestore.rules.
-    adminEmail: "admin@pointdord.com",
+    // UID do proprietário no Firebase (Authentication > Users).
+    // É um identificador público e NÃO revela o e-mail da conta.
+    // Precisa ser o MESMO UID usado em firestore.rules.
+    adminUid: "dbcAUPvHBQSQTggxkrrHapGNBAA2",
 
     // ============================
     // PIX DA LOJA (opcional, mas recomendado)

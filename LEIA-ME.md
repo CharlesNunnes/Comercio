@@ -156,22 +156,24 @@ Com o Firebase, o site fica em `https://pizzaria-rd.web.app`, instala no celular
 
 1. Menu lateral **Compilação → Authentication** → **Vamos começar**.
 2. Em **Métodos de login**, ative **E-mail/senha** → Salvar.
-3. Aba **Usuários** → **Adicionar usuário** → use o **mesmo e-mail** configurado em
-   `config.js` (campo `adminEmail`, padrão `admin@pointdord.com`) e uma senha forte.
-4. O e-mail também precisa estar em `firestore.rules`, na função `isProprietario()`.
-   Se trocar o e-mail, atualize nos três lugares: `config.js`, `firestore.rules` e
-   Authentication > Users.
-5. **Somente esse e-mail** consegue abrir o painel e ler os pedidos. Qualquer outra conta
+3. Aba **Usuários** → **Adicionar usuário** → use o **e-mail real do proprietário** e uma senha forte.
+4. Copie o **UID** desse usuário (coluna "ID do usuário") e cole em **dois lugares**:
+   - `config.js` → `adminUid`
+   - `firestore.rules` → função `isProprietario()` (substitua o UID que está lá)
+5. Publique as regras (`firebase deploy --only firestore:rules`).
+6. **Somente esse UID** consegue abrir o painel e ler os pedidos. Qualquer outra conta
    é desconectada automaticamente, mesmo que consiga se cadastrar no Firebase.
-6. O link **“Esqueci minha senha”** no painel envia o e-mail de redefinição para esse endereço.
+7. O link **“Esqueci minha senha”** no painel envia o e-mail de redefinição para o endereço
+   digitado, desde que ele exista em Authentication > Users.
 
-> **Situação atual:** o provedor E-mail/senha já está ativo e o usuário `admin@pointdord.com`
-> já foi criado. A senha inicial deve ser trocada pelo link “Esqueci minha senha” (ou em
-> Authentication > Users > redefinir senha).
+> **Por que UID e não e-mail?** O repositório é público. O UID é um identificador
+> aleatório e não expõe o e-mail pessoal do proprietário; o e-mail fica só no Firebase.
 >
-> `admin@pointdord.com` é um endereço de exemplo e pode não receber mensagens. Para o
-> proprietário recuperar a senha sozinho, troque para o e-mail real dele nos três lugares
-> citados acima e republique as regras.
+> **Situação atual:** o provedor E-mail/senha está ativo e o usuário `admin@pointdord.com`
+> já foi criado (UID `dbcAUPvHBQSQTggxkrrHapGNBAA2`, já configurado no site e nas regras).
+> Esse endereço é um exemplo e **não recebe mensagens**. Para o proprietário recuperar a
+> senha sozinho, crie o e-mail real em Authentication > Users, copie o novo UID e atualize
+> `config.js` e `firestore.rules`; depois apague o usuário antigo.
 
 ### 3.5 Publicar
 
@@ -245,9 +247,9 @@ O site é 100% estático e funciona na Vercel sem servidor:
 > Para publicar as regras novamente depois de editar `firestore.rules`, rode
 > `firebase deploy --only firestore:rules` na pasta do projeto.
 
-> Para trocar o e-mail do proprietário, atualize `config.js` (campo `adminEmail`),
-> `firestore.rules` (função `isProprietario()`), crie o novo usuário em
-> Authentication > Users e republique as regras.
+> Para trocar o proprietário, crie o novo usuário em Authentication > Users, copie o
+> **UID**, atualize `config.js` (`adminUid`) e `firestore.rules` (função
+> `isProprietario()`) e republique as regras.
 
 ### 3.9 Trocar as fotos do cardápio
 
@@ -379,11 +381,13 @@ Recomendado:
 1. Crie um e-mail real do proprietário (Gmail, Outlook etc.).
 2. No Firebase Console → **Authentication → Users**, adicione o novo e-mail e
    redefina a senha; apague o usuário `admin@pointdord.com`.
-3. Troque o e-mail em `config.js` (`adminEmail`) **e** em `firestore.rules`
-   (função `isProprietario`) e publique as regras de novo.
+3. Copie o **UID** do novo usuário e atualize `config.js` (`adminUid`) **e**
+   `firestore.rules` (função `isProprietario`) e publique as regras de novo.
 4. Ative **MFA** (Authentication → Sign-in method → Multi-factor authentication)
    para a conta do proprietário.
 5. Mantenha o cadastro público (signup) **desativado** em Authentication → Settings.
+   (Hoje ele está **habilitado**: qualquer pessoa consegue criar uma conta, mas as
+   regras impedem que ela leia pedidos. Desativar evita contas e abuso.)
 
 ### 6.4 API key do Firebase
 

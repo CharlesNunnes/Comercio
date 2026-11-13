@@ -3,12 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // E-mail do proprietário autorizado a acessar o painel.
-    // Precisa ser o MESMO e-mail de config.js (adminEmail) e o MESMO
-    // cadastrado em Authentication > Users.
+    // UID do proprietário (Firebase Console > Authentication > Users).
+    // Usamos o UID em vez do e-mail para não publicar o e-mail real no
+    // repositório. Precisa ser o MESMO UID de config.js (adminUid).
     function isProprietario() {
       return request.auth != null
-        && request.auth.token.email == "admin@pointdord.com";
+        && request.auth.uid == "dbcAUPvHBQSQTggxkrrHapGNBAA2";
     }
 
     function textoValido(valor, minimo, maximo) {

@@ -948,13 +948,13 @@ function firebaseConfigurado() {
 
 function $(id) { return document.getElementById(id); }
 
-function emailProprietario() {
-    return String((window.POINT_RD && window.POINT_RD.adminEmail) || "").trim().toLowerCase();
+function uidProprietario() {
+    return String((window.POINT_RD && window.POINT_RD.adminUid) || "").trim();
 }
 
 function ehProprietario(usuario) {
-    const alvo = emailProprietario();
-    return Boolean(usuario && usuario.email && alvo && usuario.email.toLowerCase() === alvo);
+    const alvo = uidProprietario();
+    return Boolean(usuario && usuario.uid && alvo && usuario.uid === alvo);
 }
 
 function escapar(texto) {
@@ -1517,10 +1517,6 @@ function iniciar() {
 
     $("tela-login").classList.remove("hidden");
 
-    // Já deixa o e-mail do proprietário preenchido para facilitar o acesso.
-    const campoEmail = $("login-email");
-    if (campoEmail && !campoEmail.value) campoEmail.value = emailProprietario();
-
     $("form-login").addEventListener("submit", async (event) => {
         event.preventDefault();
         const erroEl = $("login-erro");
@@ -1547,7 +1543,7 @@ function iniciar() {
 
     $("btn-esqueci").addEventListener("click", async () => {
         const erroEl = $("login-erro");
-        const email = $("login-email").value.trim() || emailProprietario();
+        const email = $("login-email").value.trim();
         erroEl.textContent = "";
         erroEl.classList.remove("info");
 
@@ -1627,8 +1623,8 @@ function iniciar() {
 
     firebase.auth().onAuthStateChanged((usuario) => {
         if (usuario) {
-            if (!emailProprietario()) {
-                $("login-erro").textContent = "Painel sem e-mail de proprietário configurado em config.js.";
+            if (!uidProprietario()) {
+                $("login-erro").textContent = "Painel sem UID de proprietário configurado em config.js.";
                 firebase.auth().signOut();
                 return;
             }
