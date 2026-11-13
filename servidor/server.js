@@ -230,10 +230,10 @@ function tokenValido(req) {
 
 function ipDoCliente(req) {
     const cf = req.headers["cf-connecting-ip"];
-    if (cf) return String(cf).split(",")[0].trim();
+    if (cf) return String(cf).split(",")[0].trim().slice(0, 64);
     const encaminhado = req.headers["x-forwarded-for"];
-    if (encaminhado) return String(encaminhado).split(",")[0].trim();
-    return req.socket.remoteAddress || "desconhecido";
+    if (encaminhado) return String(encaminhado).split(",")[0].trim().slice(0, 64);
+    return String(req.socket.remoteAddress || "desconhecido").slice(0, 64);
 }
 
 // ============================
@@ -482,6 +482,15 @@ function podePedir(ip) {
     const agora = Date.now();
     const janela = 60 * 1000;
     const maximo = 30;
+
+    // Limpa registros antigos para um IP forjado não encher a memória.
+    if (limitePedidos.size > 5000) {
+        for (const [chave, registro] of limitePedidos) {
+            const recentes = registro.filter((t) => agora - t < janela);
+            if (recentes.length) limitePedidos.set(chave, recentes);
+            else limitePedidos.delete(chave);
+        }
+    }
 
     const registro = limitePedidos.get(ip) || [];
     const recentes = registro.filter((t) => agora - t < janela);
