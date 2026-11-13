@@ -935,7 +935,7 @@ h1, h2, h3, h4 {
 
 .salgado-media {
     position: relative;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -950,6 +950,7 @@ h1, h2, h3, h4 {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center 45%;
     display: block;
 }
 

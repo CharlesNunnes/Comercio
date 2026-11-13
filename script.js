@@ -114,7 +114,7 @@ const salgados = [
         emoji: "🥟",
         descricao: "Massa fina e crocante, frito na hora. Recheio à escolha da casa.",
         tags: ["Feito na hora"],
-        image: ""
+        image: "imagem/cardapio/pastel.jpg"
     },
     {
         id: "coxinha",
@@ -123,7 +123,7 @@ const salgados = [
         emoji: "🍗",
         descricao: "Recheio cremoso de frango com casquinha crocante.",
         tags: ["Mais pedida"],
-        image: ""
+        image: "imagem/cardapio/coxinha.jpg"
     }
 ];
 
@@ -213,7 +213,10 @@ function quantidadeItens() {
 }
 
 function imagemDoItem(item) {
-    if (item.tipo === "salgado") return "";
+    if (item.tipo === "salgado") {
+        const salgado = salgados.find((s) => s.id === item.salgadoId);
+        return salgado && salgado.image ? salgado.image : "";
+    }
     const id = item.saboresIds && item.saboresIds[0];
     const sabor = sabores.find((s) => s.id === Number(id));
     return sabor ? sabor.image : "imagem/cardapio/pizza-padrao.jpg";
@@ -584,10 +587,12 @@ function abrirModalCarrinho() {
     } else {
         container.innerHTML = carrinho.map((item, index) => {
             const ehSalgado = item.tipo === "salgado";
-            const thumb = ehSalgado
-                ? `<div class="cart-item-thumb cart-item-emoji" aria-hidden="true">${item.emoji || "🥟"}</div>`
-                : `<img class="cart-item-thumb" src="${imagemDoItem(item)}" alt="" loading="lazy"
-                     onerror="this.onerror=null;this.src='imagem/cardapio/pizza-padrao.jpg'">`;
+            const imagem = imagemDoItem(item);
+            const thumb = imagem
+                ? `<img class="cart-item-thumb" src="${imagem}" alt="" loading="lazy"
+                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
+                   <div class="cart-item-thumb cart-item-emoji" aria-hidden="true" style="display:none">${item.emoji || "🥟"}</div>`
+                : `<div class="cart-item-thumb cart-item-emoji" aria-hidden="true">${item.emoji || "🥟"}</div>`;
             const titulo = ehSalgado
                 ? item.nome
                 : `${item.tamanho.label} • ${item.tamanho.fatias} fatias`;

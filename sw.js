@@ -4,7 +4,7 @@
    mesmo com internet fraca (offline parcial).
    ============================================================ */
 
-const VERSAO = "point-do-rd-v25";
+const VERSAO = "point-do-rd-v26";
 const CACHE_APP = `${VERSAO}-app`;
 const CACHE_IMAGENS = `${VERSAO}-imagens`;
 
@@ -38,6 +38,8 @@ const ARQUIVOS_APP = [
     "./imagem/cardapio/romeu-e-julieta.jpg",
     "./imagem/cardapio/brigadeiro.jpg",
     "./imagem/cardapio/doce-de-leite.jpg",
+    "./imagem/cardapio/pastel.jpg",
+    "./imagem/cardapio/coxinha.jpg",
     "./imagem/cardapio/pizza-padrao.jpg"
 ];
 
